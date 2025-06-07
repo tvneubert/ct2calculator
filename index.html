@@ -25,6 +25,7 @@
             <button class="nav-btn" data-calculator="uart">UART Parameter</button>
             <button class="nav-btn" data-calculator="uart-timing">UART Timing</button>
             <button class="nav-btn" data-calculator="uart-optimal">Optimale UART</button>
+            <button class="nav-btn" data-calculator="gpio">GPIO Konfiguration</button>
         </nav>
 
         <!-- Prescaler Calculator -->
@@ -85,13 +86,7 @@
             <h2>ADC Auflösung und Werte berechnen</h2>
             <div class="input-group">
                 <label for="adc-bits">ADC Auflösung (Bits):</label>
-                <select id="adc-bits">
-                    <option value="8">8-bit</option>
-                    <option value="10">10-bit</option>
-                    <option value="12">12-bit</option>
-                    <option value="14">14-bit</option>
-                    <option value="16">16-bit</option>
-                </select>
+                <input type="number" id="adc-bits" min="1" max="32" placeholder="z.B. 12">
             </div>
             <div class="input-group">
                 <label for="vref-mv">Referenzspannung (mV):</label>
@@ -105,6 +100,10 @@
                 <label for="input-voltage">Eingangsspannung (mV, optional):</label>
                 <input type="number" id="input-voltage" placeholder="Zum Umwandeln in Digital">
             </div>
+            <div class="input-group">
+                <label for="actual-max-voltage">Tatsächliche Spannung bei Max-Code (mV, optional):</label>
+                <input type="number" id="actual-max-voltage" placeholder="Für Gain Error Berechnung">
+            </div>
             <button onclick="calculateADC()" class="calc-btn">Berechnen</button>
             <div id="adc-result" class="result"></div>
         </div>
@@ -114,13 +113,7 @@
             <h2>ADC Offset Fehler berechnen</h2>
             <div class="input-group">
                 <label for="offset-adc-bits">ADC Auflösung (Bits):</label>
-                <select id="offset-adc-bits">
-                    <option value="8">8-bit</option>
-                    <option value="10">10-bit</option>
-                    <option value="12">12-bit</option>
-                    <option value="14">14-bit</option>
-                    <option value="16">16-bit</option>
-                </select>
+                <input type="number" id="offset-adc-bits" min="1" max="32" placeholder="z.B. 12">
             </div>
             <div class="input-group">
                 <label for="offset-vref-mv">Referenzspannung (mV):</label>
@@ -236,8 +229,8 @@
                 <input type="number" id="period-ms" step="any" placeholder="z.B. 1.0">
             </div>
             <div class="input-group">
-                <label for="duty-fraction">Duty Cycle als Bruch:</label>
-                <input type="text" id="duty-fraction" placeholder="z.B. 7/8">
+                <label for="duty-fraction">Duty Cycle (Bruch oder Prozent):</label>
+                <input type="text" id="duty-fraction" placeholder="z.B. 7/8 oder 87.5 oder 87.5%">
             </div>
             <div class="input-group">
                 <label for="complete-timer-bits">Timer Bits:</label>
@@ -373,6 +366,68 @@
             </div>
             <button onclick="findOptimalBaudRate()" class="calc-btn">Berechnen</button>
             <div id="uart-optimal-result" class="result"></div>
+        </div>
+
+        <!-- GPIO Configuration Calculator -->
+        <div id="gpio-calculator" class="calculator">
+            <h2>GPIO Konfiguration berechnen</h2>
+            <div class="input-group">
+                <label for="gpio-port">GPIO Port:</label>
+                <select id="gpio-port">
+                    <option value="A">Port A</option>
+                    <option value="B">Port B</option>
+                    <option value="C">Port C</option>
+                    <option value="D">Port D</option>
+                    <option value="E">Port E</option>
+                    <option value="F">Port F</option>
+                    <option value="G">Port G</option>
+                    <option value="H">Port H</option>
+                    <option value="I">Port I</option>
+                    <option value="J">Port J</option>
+                    <option value="K">Port K</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="gpio-pin">Pin Nummer (0-15):</label>
+                <input type="number" id="gpio-pin" min="0" max="15" placeholder="z.B. 5">
+            </div>
+            <div class="input-group">
+                <label for="gpio-mode">GPIO Mode:</label>
+                <select id="gpio-mode">
+                    <option value="input">Input</option>
+                    <option value="output">Output</option>
+                    <option value="alternate">Alternate Function</option>
+                    <option value="analog">Analog</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="gpio-output-type">Output Type (nur für Output):</label>
+                <select id="gpio-output-type">
+                    <option value="">-- Nicht verwendet --</option>
+                    <option value="push-pull">Push-Pull</option>
+                    <option value="open-drain">Open-Drain</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="gpio-pull">Pull-up/Pull-down:</label>
+                <select id="gpio-pull">
+                    <option value="none">Keine</option>
+                    <option value="pull-up">Pull-up</option>
+                    <option value="pull-down">Pull-down</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="gpio-speed">Output Speed (nur für Output):</label>
+                <select id="gpio-speed">
+                    <option value="">-- Nicht verwendet --</option>
+                    <option value="low">Low Speed</option>
+                    <option value="medium">Medium Speed</option>
+                    <option value="fast">Fast Speed</option>
+                    <option value="high">High Speed</option>
+                </select>
+            </div>
+            <button onclick="calculateGPIO()" class="calc-btn">Konfiguration berechnen</button>
+            <div id="gpio-result" class="result"></div>
         </div>
     </div>
 

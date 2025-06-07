@@ -340,3 +340,95 @@ header p {
         padding: 15px;
     }
 }
+
+/* GPIO-specific styles */
+.gpio-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gpio-table th,
+.gpio-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.gpio-table th {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.gpio-table td {
+    color: #34495e;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.gpio-table tr:last-child td {
+    border-bottom: none;
+}
+
+.gpio-table tr:nth-child(even) {
+    background: rgba(52, 152, 219, 0.02);
+}
+
+.gpio-table tr:hover {
+    background: rgba(52, 152, 219, 0.08);
+}
+
+.code-block {
+    background: #2c3e50;
+    border-radius: 8px;
+    margin: 15px 0;
+    overflow-x: auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.code-block pre {
+    color: #ecf0f1;
+    padding: 20px;
+    margin: 0;
+    font-family: 'Courier New', Monaco, monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+/* Mobile adjustments for GPIO table */
+@media (max-width: 768px) {
+    .gpio-table {
+        font-size: 0.8rem;
+    }
+    
+    .gpio-table th,
+    .gpio-table td {
+        padding: 8px 10px;
+    }
+    
+    .code-block pre {
+        font-size: 0.8rem;
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .gpio-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .code-block pre {
+        font-size: 0.75rem;
+        padding: 10px;
+    }
+}

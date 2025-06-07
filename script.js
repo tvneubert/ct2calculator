@@ -53,6 +53,10 @@ function calculatePrescaler() {
     resultHTML += `<p>Max Counter Wert für ${bits}-bit Timer: ${maxCount}</p>`;
     resultHTML += `<p>Benötigte Ticks gesamt: ${Math.round(totalTicks)}</p>`;
     
+    resultHTML += `<h4>Grundlagen Rechenweg:</h4>`;
+    resultHTML += `<p>• Max Counter = 2^${bits} - 1 = ${Math.pow(2, bits)} - 1 = ${maxCount}</p>`;
+    resultHTML += `<p>• Benötigte Ticks = Frequenz × Zeit = ${clockFreq} Hz × ${targetTime} s = ${formatNumber(totalTicks)} Ticks</p>`;
+    
     if (fixedPrescaler) {
         // Fixed prescaler calculation
         const prescaler = parseInt(fixedPrescaler);
@@ -66,6 +70,11 @@ function calculatePrescaler() {
         resultHTML += `<p>Benötigter ARR (exakt): ${formatNumber(counterVal)}</p>`;
         resultHTML += `<p>Benötigter ARR (gerundet): ${counterValRounded}</p>`;
         
+        resultHTML += `<h5>Detaillierter Rechenweg:</h5>`;
+        resultHTML += `<p>• Effektive Frequenz = Clock Frequenz / Prescaler = ${clockFreq} / ${prescaler} = ${formatNumber(effectiveFreq)} Hz</p>`;
+        resultHTML += `<p>• ARR (exakt) = Benötigte Ticks / Prescaler = ${formatNumber(totalTicks)} / ${prescaler} = ${formatNumber(counterVal)}</p>`;
+        resultHTML += `<p>• ARR (gerundet) = ${counterValRounded}</p>`;
+        
         if (counterValRounded <= maxCount) {
             const prescalerReg = prescaler - 1;
             const arrReg = counterValRounded - 1;
@@ -78,11 +87,17 @@ function calculatePrescaler() {
             resultHTML += `<p><strong>Prescaler Register Wert:</strong> ${prescalerReg} (${formatHex(prescalerReg)})</p>`;
             resultHTML += `<p><strong>ARR Register Wert:</strong> ${arrReg} (${formatHex(arrReg)})</p>`;
             resultHTML += `<p><strong>ARR Counter Wert:</strong> ${counterValRounded}</p>`;
+            
+            resultHTML += `<h5>Register Rechenweg:</h5>`;
+            resultHTML += `<p>• Prescaler Register = Prescaler - 1 = ${prescaler} - 1 = ${prescalerReg}</p>`;
+            resultHTML += `<p>• ARR Register = ARR Counter - 1 = ${counterValRounded} - 1 = ${arrReg}</p>`;
+            
             resultHTML += `<h5>Verifikation:</h5>`;
-            resultHTML += `<p>Zielzeit: ${formatNumber(targetTime * 1000)} ms</p>`;
-            resultHTML += `<p>Tatsächliche Zeit: ${formatNumber(actualTime * 1000)} ms</p>`;
-            resultHTML += `<p>Zeitfehler: ${formatNumber(timeErrorMs)} ms</p>`;
-            resultHTML += `<p>Frequenz: ${formatNumber(1 / actualTime)} Hz</p>`;
+            resultHTML += `<p>• Tatsächliche Zeit = (Prescaler × ARR Counter) / Clock Frequenz = (${prescaler} × ${counterValRounded}) / ${clockFreq} = ${formatNumber(actualTime, 6)} s</p>`;
+            resultHTML += `<p>• Zielzeit: ${formatNumber(targetTime * 1000)} ms</p>`;
+            resultHTML += `<p>• Tatsächliche Zeit: ${formatNumber(actualTime * 1000)} ms</p>`;
+            resultHTML += `<p>• Zeitfehler: ${formatNumber(timeErrorMs)} ms</p>`;
+            resultHTML += `<p>• Frequenz: ${formatNumber(1 / actualTime)} Hz</p>`;
             resultHTML += `</div>`;
         } else {
             resultHTML += `<p class="error">FEHLER: Benötigter ARR (${counterValRounded}) überschreitet ${bits}-bit Timer Kapazität (${maxCount})</p>`;
@@ -156,6 +171,11 @@ function calculatePWM() {
         resultHTML += `<p><strong>Berechneter CCR:</strong> ${finalCcrValue} (${formatHex(finalCcrValue)})</p>`;
         resultHTML += `<p><strong>Tatsächlicher Duty Cycle:</strong> ${formatNumber(actualDuty)}%</p>`;
         
+        resultHTML += `<h4>Rechenweg:</h4>`;
+        resultHTML += `<p>• CCR (exakt) = (ARR + 1) × Duty Cycle / 100 = (${finalArrValue} + 1) × ${finalDutyCycle} / 100 = ${formatNumber(ccrCalc, 3)}</p>`;
+        resultHTML += `<p>• CCR (gerundet) = ${finalCcrValue}</p>`;
+        resultHTML += `<p>• Tatsächlicher Duty Cycle = CCR × 100 / (ARR + 1) = ${finalCcrValue} × 100 / (${finalArrValue} + 1) = ${formatNumber(actualDuty, 3)}%</p>`;
+        
     } else if (hasArr && !hasDuty && hasCcr) {
         // Calculate duty cycle from ARR and CCR
         finalArrValue = parseInt(arrValue);
@@ -164,6 +184,9 @@ function calculatePWM() {
         
         resultHTML += `<p>Gegeben: ARR=${finalArrValue}, CCR=${finalCcrValue}</p>`;
         resultHTML += `<p><strong>Berechneter Duty Cycle:</strong> ${formatNumber(finalDutyCycle)}%</p>`;
+        
+        resultHTML += `<h4>Rechenweg:</h4>`;
+        resultHTML += `<p>• Duty Cycle = CCR × 100 / (ARR + 1) = ${finalCcrValue} × 100 / (${finalArrValue} + 1) = ${formatNumber(finalDutyCycle, 3)}%</p>`;
         
     } else if (!hasArr && hasDuty && hasCcr) {
         // Calculate ARR from duty cycle and CCR
@@ -175,6 +198,10 @@ function calculatePWM() {
         resultHTML += `<p>Gegeben: Duty Cycle=${finalDutyCycle}%, CCR=${finalCcrValue}</p>`;
         resultHTML += `<p><strong>Berechneter ARR:</strong> ${finalArrValue} (${formatHex(finalArrValue)})</p>`;
         resultHTML += `<p><strong>Tatsächlicher Duty Cycle:</strong> ${formatNumber(actualDuty)}%</p>`;
+        
+        resultHTML += `<h4>Rechenweg:</h4>`;
+        resultHTML += `<p>• ARR = (CCR × 100 / Duty Cycle) - 1 = (${finalCcrValue} × 100 / ${finalDutyCycle}) - 1 = ${formatNumber((finalCcrValue * 100 / finalDutyCycle), 3)} - 1 = ${finalArrValue}</p>`;
+        resultHTML += `<p>• Tatsächlicher Duty Cycle = CCR × 100 / (ARR + 1) = ${finalCcrValue} × 100 / (${finalArrValue} + 1) = ${formatNumber(actualDuty, 3)}%</p>`;
     }
     
     // Calculate period duration if clock frequency and prescaler are provided
@@ -184,6 +211,10 @@ function calculatePWM() {
         
         resultHTML += `<p><strong>Periodendauer:</strong> ${formatNumber(periodMs)} ms</p>`;
         resultHTML += `<p><strong>PWM Frequenz:</strong> ${formatNumber(freqHz)} Hz</p>`;
+        
+        resultHTML += `<h4>Timing Rechenweg:</h4>`;
+        resultHTML += `<p>• Periodendauer = (ARR + 1) × Prescaler / Clock Frequenz × 1000 = (${finalArrValue} + 1) × ${prescaler} / ${clockFreq} × 1000 = ${formatNumber(periodMs, 3)} ms</p>`;
+        resultHTML += `<p>• PWM Frequenz = Clock Frequenz / (Prescaler × (ARR + 1)) = ${clockFreq} / (${prescaler} × (${finalArrValue} + 1)) = ${formatNumber(freqHz, 3)} Hz</p>`;
     }
     
     document.getElementById('pwm-result').innerHTML = resultHTML;
@@ -195,6 +226,7 @@ function calculateADC() {
     const vrefMv = parseFloat(document.getElementById('vref-mv').value);
     const digitalValue = document.getElementById('digital-value').value;
     const inputVoltage = document.getElementById('input-voltage').value;
+    const actualMaxVoltage = document.getElementById('actual-max-voltage').value;
     
     if (!bits || !vrefMv) {
         document.getElementById('adc-result').innerHTML = '<p class="error">Bitte ADC Bits und Referenzspannung eingeben.</p>';
@@ -204,13 +236,54 @@ function calculateADC() {
     const maxDigital = Math.pow(2, bits) - 1;
     const lsbMv = vrefMv / Math.pow(2, bits);
     const fsrMv = maxDigital * lsbMv;
+    const idealMaxCodeVoltage = (maxDigital - 0.5) * lsbMv; // Ideal voltage for max code (6.5 LSB for 3-bit)
+    
+    const quantErrorMv = lsbMv / 2;
     
     let resultHTML = `<h3>ADC Konfiguration</h3>`;
     resultHTML += `<p>ADC Auflösung: ${bits} bits</p>`;
     resultHTML += `<p>Referenzspannung: ${vrefMv} mV</p>`;
     resultHTML += `<p>Max Digitalwert: ${maxDigital}</p>`;
     resultHTML += `<p>LSB Auflösung: ${formatNumber(lsbMv, 3)} mV</p>`;
-    resultHTML += `<p>Full Scale Range (FSR): ${formatNumber(fsrMv, 3)} mV</p>`;
+    resultHTML += `<p>Full Scale Range (FSR): ${formatNumber(fsrMv, 3)} mV (${formatNumber(fsrMv/1000, 3)} V)</p>`;
+    resultHTML += `<p>Ideale Spannung für Max-Code (${maxDigital}): ${formatNumber(idealMaxCodeVoltage, 1)} mV (${formatNumber(idealMaxCodeVoltage/1000, 3)} V)</p>`;
+    resultHTML += `<p>Quantisierungsfehler-Bereich: ±${formatNumber(quantErrorMv, 1)} mV (±${formatNumber(quantErrorMv/1000, 4)} V)</p>`;
+    
+    // Show calculation steps
+    resultHTML += `<h4>Rechenweg:</h4>`;
+    resultHTML += `<p>• LSB = Vref / 2^n = ${vrefMv} mV / 2^${bits} = ${vrefMv} / ${Math.pow(2, bits)} = ${formatNumber(lsbMv, 3)} mV</p>`;
+    resultHTML += `<p>• Max Digital = 2^${bits} - 1 = ${Math.pow(2, bits)} - 1 = ${maxDigital}</p>`;
+    resultHTML += `<p>• FSR = Max Digital × LSB = ${maxDigital} × ${formatNumber(lsbMv, 3)} = ${formatNumber(fsrMv, 3)} mV</p>`;
+    resultHTML += `<p>• Ideale Spannung für Max-Code = (${maxDigital} - 0.5) × LSB = ${maxDigital - 0.5} × ${formatNumber(lsbMv, 3)} = ${formatNumber(idealMaxCodeVoltage, 1)} mV</p>`;
+    resultHTML += `<p>• Quantisierungsfehler = ±LSB/2 = ±${formatNumber(lsbMv, 3)}/2 = ±${formatNumber(quantErrorMv, 1)} mV</p>`;
+    
+    // Gain Error Calculation
+    if (actualMaxVoltage) {
+        const actualMaxMv = parseFloat(actualMaxVoltage);
+        const gainErrorMv = actualMaxMv - idealMaxCodeVoltage;
+        const gainErrorLsb = gainErrorMv / lsbMv;
+        const gainErrorPercent = (gainErrorMv / idealMaxCodeVoltage) * 100;
+        
+        resultHTML += `<h4>Gain Error Analyse:</h4>`;
+        resultHTML += `<p>Tatsächliche Spannung bei Max-Code: ${actualMaxMv} mV (${formatNumber(actualMaxMv/1000, 3)} V)</p>`;
+        resultHTML += `<p>Ideale Spannung bei Max-Code: ${formatNumber(idealMaxCodeVoltage, 1)} mV (${formatNumber(idealMaxCodeVoltage/1000, 3)} V)</p>`;
+        resultHTML += `<p>Gain Error: ${formatNumber(gainErrorMv, 1)} mV (${formatNumber(gainErrorMv/1000, 3)} V)</p>`;
+        resultHTML += `<p>Gain Error: ${formatNumber(gainErrorLsb, 2)} LSB</p>`;
+        resultHTML += `<p>Gain Error: ${formatNumber(gainErrorPercent, 2)}%</p>`;
+        
+        resultHTML += `<h5>Gain Error Rechenweg:</h5>`;
+        resultHTML += `<p>• Gain Error (mV) = Tatsächlich - Ideal = ${actualMaxMv} - ${formatNumber(idealMaxCodeVoltage, 1)} = ${formatNumber(gainErrorMv, 1)} mV</p>`;
+        resultHTML += `<p>• Gain Error (LSB) = Gain Error (mV) / LSB = ${formatNumber(gainErrorMv, 1)} / ${formatNumber(lsbMv, 3)} = ${formatNumber(gainErrorLsb, 2)} LSB</p>`;
+        resultHTML += `<p>• Gain Error (%) = (Gain Error / Ideal) × 100% = (${formatNumber(gainErrorMv, 1)} / ${formatNumber(idealMaxCodeVoltage, 1)}) × 100% = ${formatNumber(gainErrorPercent, 2)}%</p>`;
+        
+        if (gainErrorMv > 0) {
+            resultHTML += `<p class="warning">Positiver Gain Error: ADC erreicht Max-Code zu früh</p>`;
+        } else if (gainErrorMv < 0) {
+            resultHTML += `<p class="warning">Negativer Gain Error: ADC erreicht Max-Code zu spät</p>`;
+        } else {
+            resultHTML += `<p class="success">Kein Gain Error vorhanden</p>`;
+        }
+    }
     
     if (digitalValue && !inputVoltage) {
         // Digital to voltage conversion
@@ -308,6 +381,10 @@ function calculateADCOffset() {
         resultHTML += `<p>Offset Fehler (Digital): ${offsetDigital} LSB</p>`;
         resultHTML += `<p>Offset Fehler (Spannung): ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
         
+        resultHTML += `<h4>Offset Rechenweg:</h4>`;
+        resultHTML += `<p>• Offset Fehler (Digital) = Gemessen - Ideal = ${measured} - ${ideal} = ${offsetDigital} LSB</p>`;
+        resultHTML += `<p>• Offset Fehler (Spannung) = Offset × LSB = ${offsetDigital} × ${formatNumber(lsbMv, 3)} = ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
+        
         if (offsetDigital > 0) {
             resultHTML += `<p>Fehlertyp: Positiver Offset (ADC liest zu hoch)</p>`;
         } else if (offsetDigital < 0) {
@@ -332,6 +409,11 @@ function calculateADCOffset() {
         resultHTML += `<p>Gemessene Spannung: ${formatNumber(measuredVoltageMv, 3)} mV</p>`;
         resultHTML += `<p>Korrigierte Spannung: ${formatNumber(correctedVoltageMv, 3)} mV</p>`;
         
+        resultHTML += `<h4>Korrektur Rechenweg:</h4>`;
+        resultHTML += `<p>• Korrigierter Digital = Gemessen - Offset = ${measured} - ${offset} = ${formatNumber(correctedDigital, 3)}</p>`;
+        resultHTML += `<p>• Gemessene Spannung = Gemessen × LSB = ${measured} × ${formatNumber(lsbMv, 3)} = ${formatNumber(measuredVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>• Korrigierte Spannung = Korrigiert × LSB = ${formatNumber(correctedDigital, 3)} × ${formatNumber(lsbMv, 3)} = ${formatNumber(correctedVoltageMv, 3)} mV</p>`;
+        
     } else if (inputVoltageMv && measuredDigital) {
         // Calculate offset from known input voltage and measured digital
         const inputVoltage = parseFloat(inputVoltageMv);
@@ -348,6 +430,12 @@ function calculateADCOffset() {
         resultHTML += `<p>Gemessener Digital: ${measured}</p>`;
         resultHTML += `<p>Gemessene Spannung: ${formatNumber(measuredVoltageMv, 3)} mV</p>`;
         resultHTML += `<p>Offset Fehler: ${offsetDigital} LSB (${formatNumber(offsetVoltageMv, 3)} mV)</p>`;
+        
+        resultHTML += `<h4>Offset aus Eingangsspannung Rechenweg:</h4>`;
+        resultHTML += `<p>• Erwarteter Digital (exakt) = Eingangsspannung / LSB = ${inputVoltage} / ${formatNumber(lsbMv, 3)} = ${formatNumber(idealDigitalExact, 6)}</p>`;
+        resultHTML += `<p>• Erwarteter Digital (gerundet) = ${idealDigitalRounded}</p>`;
+        resultHTML += `<p>• Offset Fehler = Gemessen - Erwartet = ${measured} - ${idealDigitalRounded} = ${offsetDigital} LSB</p>`;
+        resultHTML += `<p>• Offset Fehler (Spannung) = Offset × LSB = ${offsetDigital} × ${formatNumber(lsbMv, 3)} = ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
         
         if (offsetDigital > 0) {
             resultHTML += `<p>Fehlertyp: Positiver Offset (ADC liest zu hoch)</p>`;
@@ -584,17 +672,34 @@ function solveCompleteTimerPWM() {
         return;
     }
     
-    // Parse duty cycle fraction
-    const fractionParts = dutyFraction.split('/');
-    if (fractionParts.length !== 2) {
-        document.getElementById('timer-pwm-result').innerHTML = '<p class="error">Duty Cycle als Bruch eingeben (z.B. 7/8).</p>';
-        return;
+    // Parse duty cycle (fraction or percentage)
+    let dutyDecimal, dutyPercent;
+    
+    if (dutyFraction.includes('/')) {
+        // Parse as fraction (e.g., "7/8")
+        const fractionParts = dutyFraction.split('/');
+        if (fractionParts.length !== 2) {
+            document.getElementById('timer-pwm-result').innerHTML = '<p class="error">Duty Cycle als Bruch eingeben (z.B. 7/8) oder als Prozent (z.B. 87.5).</p>';
+            return;
+        }
+        const numerator = parseInt(fractionParts[0]);
+        const denominator = parseInt(fractionParts[1]);
+        dutyDecimal = numerator / denominator;
+        dutyPercent = dutyDecimal * 100;
+    } else if (dutyFraction.includes('%')) {
+        // Parse as percentage with % symbol (e.g., "87.5%")
+        dutyPercent = parseFloat(dutyFraction.replace('%', ''));
+        dutyDecimal = dutyPercent / 100;
+    } else {
+        // Parse as decimal percentage (e.g., "87.5")
+        dutyPercent = parseFloat(dutyFraction);
+        dutyDecimal = dutyPercent / 100;
     }
     
-    const numerator = parseInt(fractionParts[0]);
-    const denominator = parseInt(fractionParts[1]);
-    const dutyDecimal = numerator / denominator;
-    const dutyPercent = dutyDecimal * 100;
+    if (isNaN(dutyDecimal) || dutyDecimal <= 0 || dutyDecimal > 1) {
+        document.getElementById('timer-pwm-result').innerHTML = '<p class="error">Ungültiger Duty Cycle. Verwenden Sie Bruch (7/8) oder Prozent (87.5).</p>';
+        return;
+    }
     
     // Calculate effective frequency after prescaling
     const effFreq = clockFreq / prescaler;
@@ -616,7 +721,7 @@ function solveCompleteTimerPWM() {
     resultHTML += `<p>- Gewünschte Periode: ${periodMs} ms</p>`;
     resultHTML += `<p>- Duty Cycle: ${dutyFraction}</p>`;
     resultHTML += `<p>- Timer Bits: ${timerBits}</p>`;
-    resultHTML += `<p>- Zählrichtung: ${countDir === 'up' ? 'Aufwärts' : 'Abwärts'}</p>`;
+    resultHTML += `<p>- Zählrichtung: ${countDir === 'up' ? 'Up' : 'Down'}</p>`;
     
     resultHTML += `<p>Effektive Frequenz nach Prescaling: ${formatNumber(effFreq, 2)} Hz</p>`;
     resultHTML += `<p>Timer Ticks benötigt für ${periodMs}ms: ${timerTicks}</p>`;
@@ -628,6 +733,13 @@ function solveCompleteTimerPWM() {
     
     resultHTML += `<p>Duty Cycle: ${formatNumber(dutyPercent, 2)}% (${dutyFraction})</p>`;
     
+    resultHTML += `<h4>Timer PWM Rechenweg:</h4>`;
+    resultHTML += `<p>• Effektive Frequenz = Clock Frequenz / Prescaler = ${clockFreq} / ${prescaler} = ${formatNumber(effFreq, 2)} Hz</p>`;
+    resultHTML += `<p>• Periode in Sekunden = ${periodMs} ms / 1000 = ${formatNumber(periodS, 6)} s</p>`;
+    resultHTML += `<p>• Timer Ticks für Periode = Effektive Frequenz × Periode = ${formatNumber(effFreq, 2)} × ${formatNumber(periodS, 6)} = ${formatNumber(effFreq * periodS, 2)}</p>`;
+    resultHTML += `<p>• ARR Wert = Timer Ticks (gerundet) = ${timerTicks}</p>`;
+    resultHTML += `<p>• Duty Cycle (dezimal) = ${formatNumber(dutyPercent, 2)}% / 100 = ${formatNumber(dutyDecimal, 4)}</p>`;
+    
     // Calculate CCR value based on count direction and PWM logic
     let ccrValue;
     if (countDir === 'down') {
@@ -638,6 +750,13 @@ function solveCompleteTimerPWM() {
     } else {
         // For upcounter: PWM high when CNT < CCR, low when CNT >= CCR
         ccrValue = Math.round(arrValue * dutyDecimal);
+    }
+    
+    // CCR calculation steps
+    if (countDir === 'down') {
+        resultHTML += `<p>• CCR Berechnung (Downcounter): CCR = ARR × (1 - Duty Cycle) = ${arrValue} × (1 - ${formatNumber(dutyDecimal, 4)}) = ${arrValue} × ${formatNumber(1 - dutyDecimal, 4)} = ${formatNumber(arrValue * (1 - dutyDecimal), 2)} → ${ccrValue}</p>`;
+    } else {
+        resultHTML += `<p>• CCR Berechnung (Upcounter): CCR = ARR × Duty Cycle = ${arrValue} × ${formatNumber(dutyDecimal, 4)} = ${formatNumber(arrValue * dutyDecimal, 2)} → ${ccrValue}</p>`;
     }
     
     resultHTML += `<div class="solution">`;
@@ -658,6 +777,14 @@ function solveCompleteTimerPWM() {
     resultHTML += `<h4>Verifikation:</h4>`;
     resultHTML += `<p>Tatsächliche Periode: ${formatNumber(actualPeriod, 3)} ms</p>`;
     resultHTML += `<p>Tatsächlicher Duty Cycle: ${formatNumber(actualDuty, 2)}%</p>`;
+    
+    resultHTML += `<h5>Verifikations-Rechenweg:</h5>`;
+    resultHTML += `<p>• Tatsächliche Periode = (ARR × Prescaler / Clock Frequenz) × 1000 = (${arrValue} × ${prescaler} / ${clockFreq}) × 1000 = ${formatNumber(actualPeriod, 3)} ms</p>`;
+    if (countDir === 'down') {
+        resultHTML += `<p>• Tatsächlicher Duty Cycle = (1 - CCR/ARR) × 100% = (1 - ${ccrValue}/${arrValue}) × 100% = ${formatNumber(actualDuty, 2)}%</p>`;
+    } else {
+        resultHTML += `<p>• Tatsächlicher Duty Cycle = (CCR/ARR) × 100% = (${ccrValue}/${arrValue}) × 100% = ${formatNumber(actualDuty, 2)}%</p>`;
+    }
     
     document.getElementById('timer-pwm-result').innerHTML = resultHTML;
 }
@@ -689,6 +816,10 @@ function calculateUARTParams() {
     resultHTML += `<p>- Gesamt Bits pro Frame: ${totalFrameBits}</p>`;
     resultHTML += `<p>- Frame Effizienz: ${formatNumber(efficiencyPercent, 2)}% (Daten/Gesamt)</p>`;
     
+    resultHTML += `<h4>UART Frame Rechenweg:</h4>`;
+    resultHTML += `<p>• Gesamt Frame Bits = Start + Daten + Parität + Stopp = ${startBits} + ${dataBits} + ${parityBits} + ${stopBits} = ${totalFrameBits} Bits</p>`;
+    resultHTML += `<p>• Frame Effizienz = Daten Bits / Gesamt Bits × 100% = ${dataBits} / ${totalFrameBits} × 100% = ${formatNumber(efficiencyPercent, 2)}%</p>`;
+    
     let calculatedBaudRate, calculatedByteRate;
     
     if (byteRate && !baudRate) {
@@ -704,6 +835,12 @@ function calculateUARTParams() {
         calculatedBaudRate = Math.round(effectiveByteRate * totalFrameBits);
         resultHTML += `<p>Berechnete Baud Rate: ${calculatedBaudRate} baud</p>`;
         
+        resultHTML += `<h4>Baud Rate aus Byte Rate Rechenweg:</h4>`;
+        if (overhead) {
+            resultHTML += `<p>• Effektive Byte Rate = Angeforderte Rate / (1 - Overhead) = ${byteRate} / (1 - ${overhead}) = ${formatNumber(effectiveByteRate, 6)} bytes/s</p>`;
+        }
+        resultHTML += `<p>• Baud Rate = Effektive Byte Rate × Frame Bits = ${formatNumber(effectiveByteRate, 6)} × ${totalFrameBits} = ${calculatedBaudRate} baud</p>`;
+        
     } else if (baudRate && !byteRate) {
         // Calculate byte rate from baud rate
         calculatedBaudRate = parseInt(baudRate);
@@ -716,6 +853,12 @@ function calculateUARTParams() {
             resultHTML += `<p>Tatsächlich nutzbare Byte Rate: ${formatNumber(calculatedByteRate, 6)} bytes/s</p>`;
         } else {
             calculatedByteRate = theoreticalByteRate;
+        }
+        
+        resultHTML += `<h4>Byte Rate aus Baud Rate Rechenweg:</h4>`;
+        resultHTML += `<p>• Theoretische Byte Rate = Baud Rate / Frame Bits = ${calculatedBaudRate} / ${totalFrameBits} = ${formatNumber(theoreticalByteRate, 6)} bytes/s</p>`;
+        if (overhead) {
+            resultHTML += `<p>• Tatsächliche Byte Rate = Theoretische Rate × (1 - Overhead) = ${formatNumber(theoreticalByteRate, 6)} × (1 - ${overhead}) = ${formatNumber(calculatedByteRate, 6)} bytes/s</p>`;
         }
         
     } else if (baudRate && byteRate) {
@@ -785,6 +928,13 @@ function calculateUARTTiming() {
     resultHTML += `<p>- Gesamtübertragungszeit: ${formatNumber(totalTimeUs, 3)} μs (${formatNumber(totalTimeMs, 3)} ms)</p>`;
     resultHTML += `<p>- Effektive Datenrate: ${formatNumber(dataLengthBytes * 1000000 / totalTimeUs, 2)} bytes/s</p>`;
     
+    resultHTML += `<h4>UART Timing Rechenweg:</h4>`;
+    resultHTML += `<p>• Gesamt Frame Bits = 1 + ${dataBits} + ${parityBits} + ${stopBits} = ${totalFrameBits} Bits</p>`;
+    resultHTML += `<p>• Bit Zeit = 1 / Baud Rate = 1 / ${baudRate} = ${formatNumber(bitTimeUs, 3)} μs</p>`;
+    resultHTML += `<p>• Frame Zeit = Frame Bits × Bit Zeit = ${totalFrameBits} × ${formatNumber(bitTimeUs, 3)} = ${formatNumber(frameTimeUs, 3)} μs</p>`;
+    resultHTML += `<p>• Gesamtzeit = Bytes × Frame Zeit = ${dataLengthBytes} × ${formatNumber(frameTimeUs, 3)} = ${formatNumber(totalTimeUs, 3)} μs</p>`;
+    resultHTML += `<p>• Effektive Datenrate = Bytes × 1000000 / Gesamtzeit = ${dataLengthBytes} × 1000000 / ${formatNumber(totalTimeUs, 3)} = ${formatNumber(dataLengthBytes * 1000000 / totalTimeUs, 2)} bytes/s</p>`;
+    
     document.getElementById('uart-timing-result').innerHTML = resultHTML;
 }
 
@@ -809,6 +959,11 @@ function findOptimalBaudRate() {
     resultHTML += `<p>Ziel Byte Rate: ${targetByteRate} bytes/s</p>`;
     resultHTML += `<p>Frame Konfiguration: ${dataBits}${parity.charAt(0)}${stopBits} (${totalFrameBits} bits/frame)</p>`;
     resultHTML += `<p>Benötigte Baud Rate: ${requiredBaud} baud</p>`;
+    
+    resultHTML += `<h4>Optimale UART Rechenweg:</h4>`;
+    resultHTML += `<p>• Gesamt Frame Bits = 1 + ${dataBits} + ${parityBits} + ${stopBits} = ${totalFrameBits} Bits</p>`;
+    resultHTML += `<p>• Benötigte Baud Rate = Ziel Byte Rate × Frame Bits = ${targetByteRate} × ${totalFrameBits} = ${requiredBaud} baud</p>`;
+    
     resultHTML += `<h4>Standard Baud Rate Optionen:</h4>`;
     
     const standardBauds = [300, 600, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400, 460800, 921600];
@@ -828,4 +983,183 @@ function findOptimalBaudRate() {
     resultHTML += `<p>✓ = Innerhalb ${maxErrorPercent}% des Ziels</p>`;
     
     document.getElementById('uart-optimal-result').innerHTML = resultHTML;
+}
+
+// 12. GPIO Configuration Calculator
+function calculateGPIO() {
+    const portLetter = document.getElementById('gpio-port').value.toUpperCase();
+    const pinNumber = parseInt(document.getElementById('gpio-pin').value);
+    const mode = document.getElementById('gpio-mode').value;
+    const outputType = document.getElementById('gpio-output-type').value;
+    const pullConfig = document.getElementById('gpio-pull').value;
+    const speed = document.getElementById('gpio-speed').value;
+    
+    if (!portLetter || pinNumber === '' || !mode) {
+        document.getElementById('gpio-result').innerHTML = '<p class="error">Bitte Port, Pin und Mode ausfüllen.</p>';
+        return;
+    }
+    
+    if (pinNumber < 0 || pinNumber > 15) {
+        document.getElementById('gpio-result').innerHTML = '<p class="error">Pin Nummer muss zwischen 0-15 liegen.</p>';
+        return;
+    }
+    
+    // GPIO Base addresses for STM32F429
+    const gpioBaseAddresses = {
+        'A': 0x40020000,
+        'B': 0x40020400,
+        'C': 0x40020800,
+        'D': 0x40020C00,
+        'E': 0x40021000,
+        'F': 0x40021400,
+        'G': 0x40021800,
+        'H': 0x40021C00,
+        'I': 0x40022000,
+        'J': 0x40022400,
+        'K': 0x40022800
+    };
+    
+    if (!gpioBaseAddresses[portLetter]) {
+        document.getElementById('gpio-result').innerHTML = '<p class="error">Ungültiger Port. Verwenden Sie A-K.</p>';
+        return;
+    }
+    
+    const baseAddr = gpioBaseAddresses[portLetter];
+    
+    // Register offsets
+    const registerOffsets = {
+        'MODER': 0x00,
+        'OTYPER': 0x04,
+        'OSPEEDR': 0x08,
+        'PUPDR': 0x0C,
+        'IDR': 0x10,
+        'ODR': 0x14,
+        'BSRR': 0x18,
+        'LCKR': 0x1C,
+        'AFRL': 0x20,
+        'AFRH': 0x24
+    };
+    
+    // Mode values
+    const modeValues = {
+        'input': '00',
+        'output': '01',
+        'alternate': '10',
+        'analog': '11'
+    };
+    
+    // Output type values
+    const outputTypeValues = {
+        'push-pull': '0',
+        'open-drain': '1'
+    };
+    
+    // Pull configuration values
+    const pullValues = {
+        'none': '00',
+        'pull-up': '01',
+        'pull-down': '10'
+    };
+    
+    // Speed values
+    const speedValues = {
+        'low': '00',
+        'medium': '01',
+        'fast': '10',
+        'high': '11'
+    };
+    
+    let resultHTML = `<h3>GPIO Port ${portLetter}.${pinNumber} Konfiguration</h3>`;
+    resultHTML += `<p>Basis Adresse GPIO${portLetter}: ${formatHex(baseAddr)}</p>`;
+    resultHTML += `<p>Konfiguration: ${mode}${outputType ? `, ${outputType}` : ''}${pullConfig ? `, ${pullConfig}` : ''}${speed ? `, ${speed} speed` : ''}</p>`;
+    
+    resultHTML += `<h4>Register Konfiguration:</h4>`;
+    resultHTML += `<table class="gpio-table">`;
+    resultHTML += `<tr><th>Register</th><th>Adresse</th><th>Bits</th><th>Position</th><th>Wert</th><th>Beschreibung</th></tr>`;
+    
+    // MODER Register
+    const moderAddr = baseAddr + registerOffsets.MODER;
+    const moderBitPos = `${pinNumber * 2 + 1}:${pinNumber * 2}`;
+    const moderValue = modeValues[mode];
+    resultHTML += `<tr><td>MODER</td><td>${formatHex(moderAddr)}</td><td>${moderValue}</td><td>${moderBitPos}</td><td>${moderValue}</td><td>${mode} mode</td></tr>`;
+    
+    // OTYPER Register (only for output mode)
+    if (mode === 'output' && outputType) {
+        const otyperAddr = baseAddr + registerOffsets.OTYPER;
+        const otyperValue = outputTypeValues[outputType];
+        resultHTML += `<tr><td>OTYPER</td><td>${formatHex(otyperAddr)}</td><td>${otyperValue}</td><td>${pinNumber}</td><td>${otyperValue}</td><td>${outputType}</td></tr>`;
+    }
+    
+    // PUPDR Register (always shown)
+    if (pullConfig) {
+        const pupdrAddr = baseAddr + registerOffsets.PUPDR;
+        const pupdrBitPos = `${pinNumber * 2 + 1}:${pinNumber * 2}`;
+        const pupdrValue = pullValues[pullConfig];
+        const pullDescription = pullConfig === 'none' ? 'no pull' : pullConfig;
+        resultHTML += `<tr><td>PUPDR</td><td>${formatHex(pupdrAddr)}</td><td>${pupdrValue}</td><td>${pupdrBitPos}</td><td>${pupdrValue}</td><td>${pullDescription}</td></tr>`;
+    }
+    
+    // OSPEEDR Register (only for output mode)
+    if (mode === 'output' && speed) {
+        const ospeedrAddr = baseAddr + registerOffsets.OSPEEDR;
+        const ospeedrBitPos = `${pinNumber * 2 + 1}:${pinNumber * 2}`;
+        const ospeedrValue = speedValues[speed];
+        resultHTML += `<tr><td>OSPEEDR</td><td>${formatHex(ospeedrAddr)}</td><td>${ospeedrValue}</td><td>${ospeedrBitPos}</td><td>${ospeedrValue}</td><td>${speed} speed</td></tr>`;
+    }
+    
+    resultHTML += `</table>`;
+    
+    // Generate C code
+    resultHTML += `<h4>C Code Konfiguration:</h4>`;
+    resultHTML += `<div class="code-block">`;
+    resultHTML += `<pre>`;
+    resultHTML += `// GPIO${portLetter} Pin ${pinNumber} Konfiguration\n`;
+    resultHTML += `// ${mode}${outputType ? `, ${outputType}` : ''}${pullConfig ? `, ${pullConfig}` : ''}${speed ? `, ${speed} speed` : ''}\n\n`;
+    
+    // Calculate register values
+    const moderMask = 0x3 << (pinNumber * 2);
+    const moderSet = parseInt(moderValue, 2) << (pinNumber * 2);
+    
+    resultHTML += `// MODER Register\n`;
+    resultHTML += `GPIO${portLetter}->MODER &= ~${formatHex(moderMask)};  // Clear bits\n`;
+    resultHTML += `GPIO${portLetter}->MODER |= ${formatHex(moderSet)};   // Set ${mode} mode\n\n`;
+    
+    if (mode === 'output' && outputType) {
+        const otyperMask = 0x1 << pinNumber;
+        if (outputType === 'open-drain') {
+            resultHTML += `// OTYPER Register\n`;
+            resultHTML += `GPIO${portLetter}->OTYPER |= ${formatHex(otyperMask)};   // Set open-drain\n\n`;
+        } else {
+            resultHTML += `// OTYPER Register\n`;
+            resultHTML += `GPIO${portLetter}->OTYPER &= ~${formatHex(otyperMask)};  // Set push-pull\n\n`;
+        }
+    }
+    
+    if (pullConfig) {
+        const pupdrMask = 0x3 << (pinNumber * 2);
+        const pupdrSet = parseInt(pullValues[pullConfig], 2) << (pinNumber * 2);
+        const pullDescription = pullConfig === 'none' ? 'no pull' : pullConfig;
+        resultHTML += `// PUPDR Register\n`;
+        resultHTML += `GPIO${portLetter}->PUPDR &= ~${formatHex(pupdrMask)};  // Clear bits\n`;
+        resultHTML += `GPIO${portLetter}->PUPDR |= ${formatHex(pupdrSet)};   // Set ${pullDescription}\n\n`;
+    }
+    
+    if (mode === 'output' && speed) {
+        const ospeedrMask = 0x3 << (pinNumber * 2);
+        const ospeedrSet = parseInt(speedValues[speed], 2) << (pinNumber * 2);
+        resultHTML += `// OSPEEDR Register\n`;
+        resultHTML += `GPIO${portLetter}->OSPEEDR &= ~${formatHex(ospeedrMask)};  // Clear bits\n`;
+        resultHTML += `GPIO${portLetter}->OSPEEDR |= ${formatHex(ospeedrSet)};   // Set ${speed} speed\n\n`;
+    }
+    
+    resultHTML += `</pre>`;
+    resultHTML += `</div>`;
+    
+    // Bit manipulation helper
+    resultHTML += `<h4>Bit Manipulation Referenz:</h4>`;
+    resultHTML += `<p>Pin ${pinNumber} Bitmuster:</p>`;
+    resultHTML += `<p>- Einzelbit (OTYPER): Bit ${pinNumber}</p>`;
+    resultHTML += `<p>- Doppelbit (MODER, PUPDR, OSPEEDR): Bits ${pinNumber * 2 + 1}:${pinNumber * 2}</p>`;
+    
+    document.getElementById('gpio-result').innerHTML = resultHTML;
 }
