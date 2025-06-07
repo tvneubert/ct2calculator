@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CT2 Rechenhilfe - Timer/Counter & UART Helper</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CT2 Rechenhilfe</h1>
+            <p>Timer/Counter & UART Configuration Helper</p>
+        </header>
+
+        <nav class="calculator-nav">
+            <button class="nav-btn active" data-calculator="prescaler">Prescaler & ARR</button>
+            <button class="nav-btn" data-calculator="pwm">PWM Werte</button>
+            <button class="nav-btn" data-calculator="adc">ADC Rechner</button>
+            <button class="nav-btn" data-calculator="adc-offset">ADC Offset</button>
+            <button class="nav-btn" data-calculator="adc-optimal">Optimale ADC</button>
+            <button class="nav-btn" data-calculator="timer-solver">Timer Solver</button>
+            <button class="nav-btn" data-calculator="endian">Endianness</button>
+            <button class="nav-btn" data-calculator="timer-pwm">Timer PWM</button>
+            <button class="nav-btn" data-calculator="uart">UART Parameter</button>
+            <button class="nav-btn" data-calculator="uart-timing">UART Timing</button>
+            <button class="nav-btn" data-calculator="uart-optimal">Optimale UART</button>
+        </nav>
+
+        <!-- Prescaler Calculator -->
+        <div id="prescaler-calculator" class="calculator active">
+            <h2>Prescaler und ARR Werte berechnen</h2>
+            <div class="input-group">
+                <label for="clock-freq">Clock Frequenz (Hz):</label>
+                <input type="number" id="clock-freq" placeholder="z.B. 72000000">
+            </div>
+            <div class="input-group">
+                <label for="target-time">Gewünschtes Zeitintervall (Sekunden):</label>
+                <input type="number" id="target-time" step="any" placeholder="z.B. 0.001">
+            </div>
+            <div class="input-group">
+                <label for="timer-bits">Timer Auflösung (Bits):</label>
+                <select id="timer-bits">
+                    <option value="16">16-bit</option>
+                    <option value="32">32-bit</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="fixed-prescaler">Fester Prescaler (optional):</label>
+                <input type="number" id="fixed-prescaler" placeholder="Leer lassen für automatische Suche">
+            </div>
+            <button onclick="calculatePrescaler()" class="calc-btn">Berechnen</button>
+            <div id="prescaler-result" class="result"></div>
+        </div>
+
+        <!-- PWM Calculator -->
+        <div id="pwm-calculator" class="calculator">
+            <h2>PWM Duty Cycle Werte berechnen</h2>
+            <div class="input-group">
+                <label for="arr-value">ARR Wert:</label>
+                <input type="number" id="arr-value" placeholder="Optional">
+            </div>
+            <div class="input-group">
+                <label for="duty-cycle">Duty Cycle (%):</label>
+                <input type="number" id="duty-cycle" step="any" placeholder="Optional">
+            </div>
+            <div class="input-group">
+                <label for="ccr-value">CCR Wert:</label>
+                <input type="number" id="ccr-value" placeholder="Optional">
+            </div>
+            <div class="input-group">
+                <label for="pwm-clock-freq">Clock Frequenz (Hz, optional):</label>
+                <input type="number" id="pwm-clock-freq" placeholder="Für Periodenberechnung">
+            </div>
+            <div class="input-group">
+                <label for="pwm-prescaler">Prescaler (optional):</label>
+                <input type="number" id="pwm-prescaler" placeholder="Für Periodenberechnung">
+            </div>
+            <button onclick="calculatePWM()" class="calc-btn">Berechnen</button>
+            <div id="pwm-result" class="result"></div>
+        </div>
+
+        <!-- ADC Calculator -->
+        <div id="adc-calculator" class="calculator">
+            <h2>ADC Auflösung und Werte berechnen</h2>
+            <div class="input-group">
+                <label for="adc-bits">ADC Auflösung (Bits):</label>
+                <select id="adc-bits">
+                    <option value="8">8-bit</option>
+                    <option value="10">10-bit</option>
+                    <option value="12">12-bit</option>
+                    <option value="14">14-bit</option>
+                    <option value="16">16-bit</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="vref-mv">Referenzspannung (mV):</label>
+                <input type="number" id="vref-mv" placeholder="z.B. 3300">
+            </div>
+            <div class="input-group">
+                <label for="digital-value">Digitaler Wert (optional):</label>
+                <input type="number" id="digital-value" placeholder="Zum Umwandeln in Spannung">
+            </div>
+            <div class="input-group">
+                <label for="input-voltage">Eingangsspannung (mV, optional):</label>
+                <input type="number" id="input-voltage" placeholder="Zum Umwandeln in Digital">
+            </div>
+            <button onclick="calculateADC()" class="calc-btn">Berechnen</button>
+            <div id="adc-result" class="result"></div>
+        </div>
+
+        <!-- ADC Offset Calculator -->
+        <div id="adc-offset-calculator" class="calculator">
+            <h2>ADC Offset Fehler berechnen</h2>
+            <div class="input-group">
+                <label for="offset-adc-bits">ADC Auflösung (Bits):</label>
+                <select id="offset-adc-bits">
+                    <option value="8">8-bit</option>
+                    <option value="10">10-bit</option>
+                    <option value="12">12-bit</option>
+                    <option value="14">14-bit</option>
+                    <option value="16">16-bit</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="offset-vref-mv">Referenzspannung (mV):</label>
+                <input type="number" id="offset-vref-mv" placeholder="z.B. 3300">
+            </div>
+            <div class="input-group">
+                <label for="ideal-digital">Idealer Digitalwert (optional):</label>
+                <input type="number" id="ideal-digital" placeholder="Erwarteter Wert">
+            </div>
+            <div class="input-group">
+                <label for="measured-digital">Gemessener Digitalwert (optional):</label>
+                <input type="number" id="measured-digital" placeholder="Tatsächlicher Wert">
+            </div>
+            <div class="input-group">
+                <label for="offset-input-voltage">Bekannte Eingangsspannung (mV, optional):</label>
+                <input type="number" id="offset-input-voltage" placeholder="Für Offset-Berechnung">
+            </div>
+            <div class="input-group">
+                <label for="offset-lsb">Bekannter Offset (LSB, optional):</label>
+                <input type="number" id="offset-lsb" step="any" placeholder="Für Korrektur">
+            </div>
+            <button onclick="calculateADCOffset()" class="calc-btn">Berechnen</button>
+            <div id="adc-offset-result" class="result"></div>
+        </div>
+
+        <!-- Optimal ADC Calculator -->
+        <div id="adc-optimal-calculator" class="calculator">
+            <h2>Optimale ADC Auflösung finden</h2>
+            <div class="input-group">
+                <label for="optimal-vref-mv">Referenzspannung (mV):</label>
+                <input type="number" id="optimal-vref-mv" placeholder="z.B. 3300">
+            </div>
+            <div class="input-group">
+                <label for="target-lsb">Ziel LSB Wert (mV):</label>
+                <input type="number" id="target-lsb" step="any" placeholder="z.B. 1.0">
+            </div>
+            <button onclick="findOptimalADC()" class="calc-btn">Berechnen</button>
+            <div id="adc-optimal-result" class="result"></div>
+        </div>
+
+        <!-- Timer Solver -->
+        <div id="timer-solver-calculator" class="calculator">
+            <h2>Timer/Counter Problem lösen</h2>
+            <div class="input-group">
+                <label for="solver-timer-bits">Timer Auflösung (Bits):</label>
+                <select id="solver-timer-bits">
+                    <option value="16">16-bit</option>
+                    <option value="32">32-bit</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="current-cnt">Aktueller CNT Wert:</label>
+                <input type="number" id="current-cnt" placeholder="z.B. 1000">
+            </div>
+            <div class="input-group">
+                <label for="solver-ccr-value">CCR Wert:</label>
+                <input type="number" id="solver-ccr-value" placeholder="z.B. 2000">
+            </div>
+            <div class="input-group">
+                <label for="solver-prescaler">Prescaler (jeder N-te Zyklus):</label>
+                <input type="number" id="solver-prescaler" placeholder="z.B. 8">
+            </div>
+            <div class="input-group">
+                <label for="count-direction">Zählrichtung:</label>
+                <select id="count-direction">
+                    <option value="up">Aufwärts</option>
+                    <option value="down">Abwärts</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="solver-arr-value">ARR Wert (optional):</label>
+                <input type="number" id="solver-arr-value" placeholder="Leer für Maximum">
+            </div>
+            <button onclick="solveTimerProblem()" class="calc-btn">Berechnen</button>
+            <div id="timer-solver-result" class="result"></div>
+        </div>
+
+        <!-- Endianness Converter -->
+        <div id="endian-calculator" class="calculator">
+            <h2>Endianness Konverter</h2>
+            <div class="input-group">
+                <label for="hex-data">Hex Daten:</label>
+                <input type="text" id="hex-data" placeholder="z.B. 0x1234ABCD oder 1234ABCD">
+            </div>
+            <div class="input-group">
+                <label for="target-endian">Ziel Endianness:</label>
+                <select id="target-endian">
+                    <option value="little">Little Endian</option>
+                    <option value="big">Big Endian</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="data-width">Datenbreite (Bits, optional):</label>
+                <input type="number" id="data-width" placeholder="z.B. 32">
+            </div>
+            <button onclick="convertEndianness()" class="calc-btn">Konvertieren</button>
+            <div id="endian-result" class="result"></div>
+        </div>
+
+        <!-- Complete Timer PWM -->
+        <div id="timer-pwm-calculator" class="calculator">
+            <h2>Kompletter Timer PWM Problem Solver</h2>
+            <div class="input-group">
+                <label for="complete-clock-freq">Clock Frequenz (Hz):</label>
+                <input type="number" id="complete-clock-freq" placeholder="z.B. 72000000">
+            </div>
+            <div class="input-group">
+                <label for="complete-prescaler">Prescaler Wert:</label>
+                <input type="number" id="complete-prescaler" placeholder="z.B. 8">
+            </div>
+            <div class="input-group">
+                <label for="period-ms">Gewünschte Periode (ms):</label>
+                <input type="number" id="period-ms" step="any" placeholder="z.B. 1.0">
+            </div>
+            <div class="input-group">
+                <label for="duty-fraction">Duty Cycle als Bruch:</label>
+                <input type="text" id="duty-fraction" placeholder="z.B. 7/8">
+            </div>
+            <div class="input-group">
+                <label for="complete-timer-bits">Timer Bits:</label>
+                <select id="complete-timer-bits">
+                    <option value="16" selected>16-bit</option>
+                    <option value="32">32-bit</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="complete-count-dir">Zählrichtung:</label>
+                <select id="complete-count-dir">
+                    <option value="down" selected>Abwärts</option>
+                    <option value="up">Aufwärts</option>
+                </select>
+            </div>
+            <button onclick="solveCompleteTimerPWM()" class="calc-btn">Berechnen</button>
+            <div id="timer-pwm-result" class="result"></div>
+        </div>
+
+        <!-- UART Parameters -->
+        <div id="uart-calculator" class="calculator">
+            <h2>UART Parameter berechnen</h2>
+            <div class="input-group">
+                <label for="uart-data-bits">Datenbits:</label>
+                <select id="uart-data-bits">
+                    <option value="8" selected>8</option>
+                    <option value="7">7</option>
+                    <option value="9">9</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="uart-stop-bits">Stoppbits:</label>
+                <select id="uart-stop-bits">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="uart-parity">Parität:</label>
+                <select id="uart-parity">
+                    <option value="none" selected>Keine</option>
+                    <option value="even">Gerade</option>
+                    <option value="odd">Ungerade</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="uart-baud-rate">Baud Rate (optional):</label>
+                <input type="number" id="uart-baud-rate" placeholder="z.B. 9600">
+            </div>
+            <div class="input-group">
+                <label for="uart-byte-rate">Byte Rate (Bytes/s, optional):</label>
+                <input type="number" id="uart-byte-rate" placeholder="z.B. 1000">
+            </div>
+            <div class="input-group">
+                <label for="uart-overhead">Sync Overhead Verhältnis (optional):</label>
+                <input type="number" id="uart-overhead" step="any" placeholder="z.B. 0.1 für 10%">
+            </div>
+            <button onclick="calculateUARTParams()" class="calc-btn">Berechnen</button>
+            <div id="uart-result" class="result"></div>
+        </div>
+
+        <!-- UART Timing -->
+        <div id="uart-timing-calculator" class="calculator">
+            <h2>UART Übertragungszeit berechnen</h2>
+            <div class="input-group">
+                <label for="timing-baud-rate">Baud Rate:</label>
+                <input type="number" id="timing-baud-rate" placeholder="z.B. 9600">
+            </div>
+            <div class="input-group">
+                <label for="data-length-bytes">Anzahl Bytes zu übertragen:</label>
+                <input type="number" id="data-length-bytes" placeholder="z.B. 100">
+            </div>
+            <div class="input-group">
+                <label for="timing-data-bits">Datenbits:</label>
+                <select id="timing-data-bits">
+                    <option value="8" selected>8</option>
+                    <option value="7">7</option>
+                    <option value="9">9</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="timing-stop-bits">Stoppbits:</label>
+                <select id="timing-stop-bits">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="timing-parity">Parität:</label>
+                <select id="timing-parity">
+                    <option value="none" selected>Keine</option>
+                    <option value="even">Gerade</option>
+                    <option value="odd">Ungerade</option>
+                </select>
+            </div>
+            <button onclick="calculateUARTTiming()" class="calc-btn">Berechnen</button>
+            <div id="uart-timing-result" class="result"></div>
+        </div>
+
+        <!-- Optimal UART -->
+        <div id="uart-optimal-calculator" class="calculator">
+            <h2>Optimale UART Baud Rate finden</h2>
+            <div class="input-group">
+                <label for="target-byte-rate">Ziel Byte Rate (Bytes/s):</label>
+                <input type="number" id="target-byte-rate" placeholder="z.B. 1000">
+            </div>
+            <div class="input-group">
+                <label for="optimal-data-bits">Datenbits:</label>
+                <select id="optimal-data-bits">
+                    <option value="8" selected>8</option>
+                    <option value="7">7</option>
+                    <option value="9">9</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="optimal-stop-bits">Stoppbits:</label>
+                <select id="optimal-stop-bits">
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="optimal-parity">Parität:</label>
+                <select id="optimal-parity">
+                    <option value="none" selected>Keine</option>
+                    <option value="even">Gerade</option>
+                    <option value="odd">Ungerade</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="max-error-percent">Max. Fehler (%):</label>
+                <input type="number" id="max-error-percent" value="5" step="any" placeholder="z.B. 5">
+            </div>
+            <button onclick="findOptimalBaudRate()" class="calc-btn">Berechnen</button>
+            <div id="uart-optimal-result" class="result"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
