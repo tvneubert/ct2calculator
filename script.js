@@ -103,7 +103,7 @@ function calculatePrescaler() {
             resultHTML += `</div>`;
         } else {
             resultHTML += `<p class="error">FEHLER: Benötigter ARR (${counterValRounded}) überschreitet ${bits}-bit Timer Kapazität (${maxCount})</p>`;
-            resultHTML += `<p>Versuchen Sie einen größeren Prescaler Wert oder kürzeres Zeitintervall.</p>`;
+            resultHTML += `<p>Versuchen Sie einen grösseren Prescaler Wert oder kürzeres Zeitintervall.</p>`;
         }
     } else {
         // Try different prescaler values
@@ -1166,4 +1166,224 @@ function calculateGPIO() {
     resultHTML += `<p>- Doppelbit (MODER, PUPDR, OSPEEDR): Bits ${pinNumber * 2 + 1}:${pinNumber * 2}</p>`;
     
     document.getElementById('gpio-result').innerHTML = resultHTML;
+}
+
+// 13. Address Decoding Calculator
+function calculateAddressDecoding() {
+    const addressLinesInput = document.getElementById('address-lines').value.trim();
+    const controlRegisterBits = document.getElementById('control-register-bits').value;
+    const baseAddress = document.getElementById('base-address').value;
+    const selectPattern = document.getElementById('select-pattern').value;
+    const targetAddress = document.getElementById('target-address').value;
+    
+    if (!addressLinesInput) {
+        document.getElementById('address-decoder-result').innerHTML = '<p class="error">Bitte Anzahl Adressleitungen eingeben.</p>';
+        return;
+    }
+    
+    // Parse address lines input - accept both number and A[x:y] format
+    let addressLines;
+    if (addressLinesInput.match(/A\[\d+:\d+\]/i)) {
+        // Parse A[x:y] format
+        const match = addressLinesInput.match(/A\[(\d+):(\d+)\]/i);
+        if (match) {
+            const highBit = parseInt(match[1]);
+            const lowBit = parseInt(match[2]);
+            addressLines = highBit - lowBit + 1;
+        } else {
+            document.getElementById('address-decoder-result').innerHTML = '<p class="error">Ungültiges Format. Verwenden Sie z.B. A[5:0] oder 6.</p>';
+            return;
+        }
+    } else {
+        // Parse as number
+        addressLines = parseInt(addressLinesInput);
+        if (isNaN(addressLines)) {
+            document.getElementById('address-decoder-result').innerHTML = '<p class="error">Ungültiges Format. Verwenden Sie z.B. A[5:0] oder 6.</p>';
+            return;
+        }
+    }
+    
+    const totalAddressableBytes = Math.pow(2, addressLines);
+    const maxAddress = totalAddressableBytes - 1;
+    
+    // Parse base address
+    let baseAddr = 0;
+    if (baseAddress) {
+        baseAddr = parseInt(baseAddress.replace(/^0x/i, ''), 16);
+    }
+    
+    let resultHTML = `<h3>Adressdekodierung Analyse</h3>`;
+    resultHTML += `<p>Eingabe: ${addressLinesInput}</p>`;
+    resultHTML += `<p>Adressleitungen: A[${addressLines-1}:0] (${addressLines} Bits)</p>`;
+    resultHTML += `<p>Adressierbare Bytes: ${totalAddressableBytes}</p>`;
+    resultHTML += `<p>Adressbereich: 0x${baseAddr.toString(16).toUpperCase().padStart(Math.ceil(addressLines/4), '0')} bis 0x${(baseAddr + maxAddress).toString(16).toUpperCase().padStart(Math.ceil(addressLines/4), '0')}</p>`;
+    
+    resultHTML += `<h4>Grundlagen Rechenweg:</h4>`;
+    resultHTML += `<p>• Adressierbare Bytes = 2^n = 2^${addressLines} = ${totalAddressableBytes} Bytes</p>`;
+    resultHTML += `<p>• Adressraum = ${totalAddressableBytes} verschiedene Adressen</p>`;
+    resultHTML += `<p>• Max Adresse = 2^${addressLines} - 1 = ${maxAddress} (0x${maxAddress.toString(16).toUpperCase()})</p>`;
+    
+    // Control Register Analysis
+    if (controlRegisterBits) {
+        const crBits = parseInt(controlRegisterBits);
+        const crAddresses = Math.pow(2, crBits);
+        
+        resultHTML += `<h4>Control Register Analyse:</h4>`;
+        resultHTML += `<p>Control Register Adressbits: ${crBits}</p>`;
+        resultHTML += `<p>Anzahl Control Register Adressen: 2^${crBits} = ${crAddresses}</p>`;
+        
+        resultHTML += `<h5>Control Register Rechenweg:</h5>`;
+        resultHTML += `<p>• CR Adressen = 2^${crBits} = ${crAddresses} verschiedene Adressen</p>`;
+        resultHTML += `<p>• Verwendete Adressleitungen: A[${crBits-1}:0]</p>`;
+        resultHTML += `<p>• Nicht verwendete Leitungen: A[${addressLines-1}:${crBits}] (${addressLines-crBits} Bits)</p>`;
+        
+        // Generate all control register addresses
+        resultHTML += `<h5>Control Register Adressen:</h5>`;
+        resultHTML += `<div class="address-table">`;
+        for (let i = 0; i < crAddresses; i++) {
+            const address = baseAddr + i;
+            const binary = i.toString(2).padStart(crBits, '0');
+            const hex = address.toString(16).toUpperCase().padStart(Math.ceil(addressLines/4), '0');
+            resultHTML += `<p>CR${i}: 0x${hex} (Binär: ${binary})</p>`;
+        }
+        resultHTML += `</div>`;
+    }
+    
+    // Select Pattern Analysis
+    if (selectPattern) {
+        resultHTML += `<h4>Select-Signal Dekodierung:</h4>`;
+        resultHTML += `<p>Select Muster: ${selectPattern}</p>`;
+        
+        // Parse select pattern and generate addresses
+        const addresses = parseSelectPattern(selectPattern, addressLines, baseAddr);
+        if (addresses.length > 0) {
+            resultHTML += `<p>Generierte Adressen:</p>`;
+            addresses.forEach((addr, index) => {
+                const hex = addr.toString(16).toUpperCase().padStart(Math.ceil(addressLines/4), '0');
+                const binary = (addr - baseAddr).toString(2).padStart(addressLines, '0');
+                resultHTML += `<p>Adresse ${index}: 0x${hex} (Binär: ${binary})</p>`;
+            });
+            
+            resultHTML += `<h5>Select Pattern Rechenweg:</h5>`;
+            resultHTML += `<p>• Pattern: ${selectPattern}</p>`;
+            resultHTML += `<p>• Anzahl gültige Adressen: ${addresses.length}</p>`;
+        } else {
+            resultHTML += `<p class="error">Ungültiges Select Pattern oder keine gültigen Adressen gefunden.</p>`;
+        }
+    }
+    
+    // Target Address Analysis (Reverse Engineering)
+    if (targetAddress) {
+        const targetAddr = parseInt(targetAddress.replace(/^0x/i, ''), 16);
+        const relativeAddr = targetAddr - baseAddr;
+        const binary = relativeAddr.toString(2).padStart(addressLines, '0');
+        
+        resultHTML += `<h4>Zieladresse Dekodierung:</h4>`;
+        resultHTML += `<p>Zieladresse: 0x${targetAddr.toString(16).toUpperCase()}</p>`;
+        resultHTML += `<p>Relative Adresse: ${relativeAddr} (0x${relativeAddr.toString(16).toUpperCase()})</p>`;
+        resultHTML += `<p>Binär: ${binary}</p>`;
+        
+        // Generate select signals for target address
+        resultHTML += `<h5>Benötigte Select-Signale:</h5>`;
+        let selectSignals = [];
+        for (let i = 0; i < addressLines; i++) {
+            const bit = (relativeAddr >> i) & 1;
+            const signal = bit ? `A[${i}]` : `!A[${i}]`;
+            selectSignals.push(signal);
+        }
+        resultHTML += `<p>Select = ${selectSignals.reverse().join(' & ')}</p>`;
+        
+        resultHTML += `<h5>Zieladresse Rechenweg:</h5>`;
+        resultHTML += `<p>• Zieladresse = 0x${targetAddr.toString(16).toUpperCase()}</p>`;
+        resultHTML += `<p>• Relative Adresse = Zieladresse - Basis = 0x${targetAddr.toString(16).toUpperCase()} - 0x${baseAddr.toString(16).toUpperCase()} = ${relativeAddr}</p>`;
+        resultHTML += `<p>• Binärdarstellung = ${binary}</p>`;
+        
+        // Bit analysis
+        for (let i = addressLines - 1; i >= 0; i--) {
+            const bit = (relativeAddr >> i) & 1;
+            resultHTML += `<p>• A[${i}] = ${bit} ${bit ? '(High)' : '(Low)'}</p>`;
+        }
+    }
+    
+    // Example calculations based on the original problem
+    if (addressLines === 6) {
+        resultHTML += `<h4>Beispielrechnungen (wie in Aufgabe):</h4>`;
+        
+        // Example a) 64 Bytes addressable
+        resultHTML += `<p><strong>a)</strong> Addressierbare Bytes = 2^6 = 64 Bytes</p>`;
+        
+        // Example b) 4 address lines for control register
+        if (controlRegisterBits === '4') {
+            resultHTML += `<p><strong>b)</strong> Control Register mit 4 Adressleitungen = 2^4 = 4 Adressen</p>`;
+        }
+        
+        // Example patterns
+        const examples = [
+            {letter: 'c', pattern: 'A[5]&A[4]&!A[3]&A[2]', expectedAddresses: ['0x30', '0x31', '0x32', '0x33']},
+            {letter: 'd', pattern: '!A[3]&A[2]&A[1]&!A[0]', expectedAddresses: ['0x06', '0x16', '0x26', '0x36']},
+            {letter: 'e', pattern: '!A[4]&A[3]&A[2]&!A[1]', expectedAddresses: ['0x04', '0x05', '0x24', '0x25']}
+        ];
+        
+        examples.forEach(example => {
+            const addresses = parseSelectPattern(example.pattern, 6, 0);
+            if (addresses.length > 0) {
+                const hexAddresses = addresses.map(addr => '0x' + addr.toString(16).toUpperCase().padStart(2, '0'));
+                resultHTML += `<p><strong>${example.letter})</strong> Pattern "${example.pattern}" → Adressen: ${hexAddresses.join(', ')}</p>`;
+            }
+        });
+    }
+    
+    document.getElementById('address-decoder-result').innerHTML = resultHTML;
+}
+
+// Helper function to parse select patterns and generate addresses
+function parseSelectPattern(pattern, addressLines, baseAddr) {
+    const addresses = [];
+    
+    try {
+        // Simple pattern parser for basic cases
+        // This is a simplified version - could be extended for more complex patterns
+        
+        // Generate all possible addresses and test against pattern
+        const totalAddresses = Math.pow(2, addressLines);
+        
+        for (let addr = 0; addr < totalAddresses; addr++) {
+            if (evaluateSelectPattern(pattern, addr, addressLines)) {
+                addresses.push(baseAddr + addr);
+            }
+        }
+        
+        // Limit to reasonable number of addresses for display
+        return addresses.slice(0, 16);
+    } catch (error) {
+        return [];
+    }
+}
+
+// Helper function to evaluate if an address matches a select pattern
+function evaluateSelectPattern(pattern, address, addressLines) {
+    try {
+        // Replace A[n] with actual bit values
+        let evaluationString = pattern;
+        
+        for (let i = 0; i < addressLines; i++) {
+            const bit = (address >> i) & 1;
+            const regex = new RegExp(`A\\[${i}\\]`, 'g');
+            evaluationString = evaluationString.replace(regex, bit.toString());
+        }
+        
+        // Replace logical operators
+        evaluationString = evaluationString.replace(/&/g, '&&');
+        evaluationString = evaluationString.replace(/\|/g, '||');
+        evaluationString = evaluationString.replace(/!/g, '!');
+        
+        // Evaluate the expression (basic safety check)
+        if (/^[0-9!&|() ]+$/.test(evaluationString)) {
+            return eval(evaluationString);
+        }
+        
+        return false;
+    } catch (error) {
+        return false;
+    }
 }

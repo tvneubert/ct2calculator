@@ -26,6 +26,7 @@
             <button class="nav-btn" data-calculator="uart-timing">UART Timing</button>
             <button class="nav-btn" data-calculator="uart-optimal">Optimale UART</button>
             <button class="nav-btn" data-calculator="gpio">GPIO Konfiguration</button>
+            <button class="nav-btn" data-calculator="address-decoder">Adressdekodierung</button>
         </nav>
 
         <!-- Prescaler Calculator -->
@@ -272,8 +273,8 @@
                 <label for="uart-parity">Parität:</label>
                 <select id="uart-parity">
                     <option value="none" selected>Keine</option>
-                    <option value="even">Gerade</option>
-                    <option value="odd">Ungerade</option>
+                    <option value="even">Even</option>
+                    <option value="odd">Odd</option>
                 </select>
             </div>
             <div class="input-group">
@@ -322,8 +323,8 @@
                 <label for="timing-parity">Parität:</label>
                 <select id="timing-parity">
                     <option value="none" selected>Keine</option>
-                    <option value="even">Gerade</option>
-                    <option value="odd">Ungerade</option>
+                    <option value="even">Even</option>
+                    <option value="odd">Odd</option>
                 </select>
             </div>
             <button onclick="calculateUARTTiming()" class="calc-btn">Berechnen</button>
@@ -356,8 +357,8 @@
                 <label for="optimal-parity">Parität:</label>
                 <select id="optimal-parity">
                     <option value="none" selected>Keine</option>
-                    <option value="even">Gerade</option>
-                    <option value="odd">Ungerade</option>
+                    <option value="even">Even</option>
+                    <option value="odd">Odd</option>
                 </select>
             </div>
             <div class="input-group">
@@ -428,6 +429,33 @@
             </div>
             <button onclick="calculateGPIO()" class="calc-btn">Konfiguration berechnen</button>
             <div id="gpio-result" class="result"></div>
+        </div>
+
+        <!-- Address Decoding Calculator -->
+        <div id="address-decoder-calculator" class="calculator">
+            <h2>Adressdekodierung berechnen</h2>
+            <div class="input-group">
+                <label for="address-lines">Adressleitungen:</label>
+                <input type="text" id="address-lines" placeholder="z.B. A[5:0] oder 6">
+            </div>
+            <div class="input-group">
+                <label for="control-register-bits">Control Register Adressbits (optional):</label>
+                <input type="number" id="control-register-bits" min="1" max="16" placeholder="z.B. 4 für 4 Adressen">
+            </div>
+            <div class="input-group">
+                <label for="base-address">Basisadresse (Hex, optional):</label>
+                <input type="text" id="base-address" placeholder="z.B. 0x1000 oder leer für 0x0000">
+            </div>
+            <div class="input-group">
+                <label for="select-pattern">Select-Signal Muster (optional):</label>
+                <input type="text" id="select-pattern" placeholder="z.B. A[5]&A[4]&!A[3]&A[2] für spezifische Dekodierung">
+            </div>
+            <div class="input-group">
+                <label for="target-address">Zieladresse für Dekodierung (Hex, optional):</label>
+                <input type="text" id="target-address" placeholder="z.B. 0x28 für Reverse-Engineering">
+            </div>
+            <button onclick="calculateAddressDecoding()" class="calc-btn">Adressdekodierung berechnen</button>
+            <div id="address-decoder-result" class="result"></div>
         </div>
     </div>
 
