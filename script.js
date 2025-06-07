@@ -90,7 +90,9 @@ function calculatePrescaler() {
             
             resultHTML += `<h5>Register Rechenweg:</h5>`;
             resultHTML += `<p>• Prescaler Register = Prescaler - 1 = ${prescaler} - 1 = ${prescalerReg}</p>`;
-            resultHTML += `<p>• ARR Register = ARR Counter - 1 = ${counterValRounded} - 1 = ${arrReg}</p>`;
+            resultHTML += `<p>• ARR Register (Reload-Wert) = ARR Counter - 1 = ${counterValRounded} - 1 = ${arrReg}</p>`;
+            resultHTML += `<p>• Reload-Bedeutung: Timer zählt von 0 bis ${arrReg}, dann Reload auf ${arrReg}</p>`;
+            resultHTML += `<p>• Counter-Zyklen: 0, 1, 2, ..., ${arrReg} → ${counterValRounded} verschiedene Zustände</p>`;
             
             resultHTML += `<h5>Verifikation:</h5>`;
             resultHTML += `<p>• Tatsächliche Zeit = (Prescaler × ARR Counter) / Clock Frequenz = (${prescaler} × ${counterValRounded}) / ${clockFreq} = ${formatNumber(actualTime, 6)} s</p>`;
@@ -119,7 +121,9 @@ function calculatePrescaler() {
                 
                 resultHTML += `<div class="config-option">`;
                 resultHTML += `<p><strong>Prescaler:</strong> ${prescaler} (Register: ${formatHex(prescalerReg)})</p>`;
-                resultHTML += `<p><strong>ARR Wert:</strong> ${counterVal} (Register: ${formatHex(arrReg)})</p>`;
+                resultHTML += `<p><strong>ARR Counter Wert:</strong> ${counterVal}</p>`;
+                resultHTML += `<p><strong>ARR Register (Reload-Wert):</strong> ${arrReg} (${formatHex(arrReg)})</p>`;
+                resultHTML += `<p><strong>Reload-Bedeutung:</strong> Timer zählt 0→${arrReg}, dann Reload</p>`;
                 resultHTML += `<p><strong>Exakte Zeit:</strong> ${formatNumber(exactTime, 6)} Sekunden</p>`;
                 resultHTML += `</div>`;
                 foundSolutions = true;
@@ -528,7 +532,7 @@ function solveTimerProblem() {
     resultHTML += `<p>- Aktueller CNT: ${cntCurrent}</p>`;
     resultHTML += `<p>- CCR Wert: ${ccrValue}</p>`;
     resultHTML += `<p>- Prescaler: jeden ${prescaler}. Zyklus</p>`;
-    resultHTML += `<p>- Richtung: ${countDirection === 'up' ? 'Aufwärts' : 'Abwärts'}</p>`;
+    resultHTML += `<p>- Richtung: ${countDirection === 'up' ? 'Up' : 'Down'}</p>`;
     resultHTML += `<p>- ARR Wert: ${arrValue}</p>`;
     
     let timerCycles = 0;
