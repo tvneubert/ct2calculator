@@ -92,7 +92,7 @@ function calculatePrescaler() {
         resultHTML += `<p>• ARR (gerundet) = ${counterValRounded}</p>`;
         
         if (counterValRounded <= maxCount) {
-            const prescalerReg = prescaler - 1;
+            const prescalerReg = prescaler; // User input is the actual prescaler value to use
             const arrReg = counterValRounded - 1;
             const actualTime = (prescaler * counterValRounded) / clockFreq;
             const timeError = actualTime - targetTime;
@@ -100,12 +100,12 @@ function calculatePrescaler() {
             
             resultHTML += `<div class="solution">`;
             resultHTML += `<h4>LÖSUNG:</h4>`;
-            resultHTML += `<p><strong>Prescaler Register Wert:</strong> ${prescalerReg} (${formatHex(prescalerReg)})</p>`;
+            resultHTML += `<p><strong>Prescaler Wert:</strong> ${prescalerReg} (${formatHex(prescalerReg)})</p>`;
             resultHTML += `<p><strong>ARR Register Wert:</strong> ${arrReg} (${formatHex(arrReg)})</p>`;
             resultHTML += `<p><strong>ARR Counter Wert:</strong> ${counterValRounded}</p>`;
             
             resultHTML += `<h5>Register Rechenweg:</h5>`;
-            resultHTML += `<p>• Prescaler Register = Prescaler - 1 = ${prescaler} - 1 = ${prescalerReg}</p>`;
+            resultHTML += `<p>• Prescaler Wert = ${prescaler} (wie eingegeben)</p>`;
             resultHTML += `<p>• ARR Register (Reload-Wert) = ARR Counter - 1 = ${counterValRounded} - 1 = ${arrReg}</p>`;
             resultHTML += `<p>• Reload-Bedeutung: Timer zählt von 0 bis ${arrReg}, dann Reload auf ${arrReg}</p>`;
             resultHTML += `<p>• Counter-Zyklen: 0, 1, 2, ..., ${arrReg} → ${counterValRounded} verschiedene Zustände</p>`;
@@ -124,23 +124,38 @@ function calculatePrescaler() {
     } else {
         // Try different prescaler values
         resultHTML += `<h4>Mögliche Konfigurationen:</h4>`;
-        const prescalerValues = [1, 2, 4, 8, 16, 21, 32, 64, 100, 256, 512, 1000, 8400];
+        
+        // Generate better prescaler suggestions based on the actual requirement
+        let prescalerValues = [1, 2, 4, 5, 8, 10, 16, 20, 21, 25, 32, 50, 64, 100, 125, 256, 500, 512, 1000, 8400];
+        
+        // Add calculated optimal prescaler values
+        const idealPrescaler = Math.round(totalTicks / maxCount);
+        if (idealPrescaler > 0 && !prescalerValues.includes(idealPrescaler)) {
+            prescalerValues.push(idealPrescaler);
+        }
+        
+        // Sort prescaler values
+        prescalerValues.sort((a, b) => a - b);
+        
         let foundSolutions = false;
         
         prescalerValues.forEach(prescaler => {
             const counterVal = Math.round(totalTicks / prescaler);
             
             if (counterVal <= maxCount && counterVal > 0) {
-                const prescalerReg = prescaler - 1;
+                const prescalerReg = prescaler; // No -1 for user display
                 const arrReg = counterVal - 1;
                 const exactTime = (prescaler * counterVal) / clockFreq;
+                const timeError = Math.abs(exactTime - targetTime);
+                const timeErrorPercent = (timeError / targetTime) * 100;
                 
                 resultHTML += `<div class="config-option">`;
-                resultHTML += `<p><strong>Prescaler:</strong> ${prescaler} (Register: ${formatHex(prescalerReg)})</p>`;
+                resultHTML += `<p><strong>Prescaler:</strong> ${prescaler} (${formatHex(prescalerReg)})</p>`;
                 resultHTML += `<p><strong>ARR Counter Wert:</strong> ${counterVal}</p>`;
                 resultHTML += `<p><strong>ARR Register (Reload-Wert):</strong> ${arrReg} (${formatHex(arrReg)})</p>`;
                 resultHTML += `<p><strong>Reload-Bedeutung:</strong> Timer zählt 0→${arrReg}, dann Reload</p>`;
                 resultHTML += `<p><strong>Exakte Zeit:</strong> ${formatNumber(exactTime, 6)} Sekunden</p>`;
+                resultHTML += `<p><strong>Zeitfehler:</strong> ${formatNumber(timeError * 1000, 3)} ms (${formatNumber(timeErrorPercent, 2)}%)</p>`;
                 resultHTML += `</div>`;
                 foundSolutions = true;
             }
