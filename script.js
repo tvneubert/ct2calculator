@@ -256,18 +256,18 @@ function calculateADC() {
     resultHTML += `<p>ADC Auflösung: ${bits} bits</p>`;
     resultHTML += `<p>Referenzspannung: ${vrefMv} mV</p>`;
     resultHTML += `<p>Max Digitalwert: ${maxDigital}</p>`;
-    resultHTML += `<p>LSB Auflösung: ${formatNumber(lsbMv, 3)} mV</p>`;
-    resultHTML += `<p>Full Scale Range (FSR): ${formatNumber(fsrMv, 3)} mV (${formatNumber(fsrMv/1000, 3)} V)</p>`;
+    resultHTML += `<p>LSB Auflösung: ${formatNumber(lsbMv, 2)} mV</p>`;
+    resultHTML += `<p>Full Scale Range (FSR): ${formatNumber(fsrMv, 2)} mV (${formatNumber(fsrMv/1000, 2)} V)</p>`;
     resultHTML += `<p>Ideale Spannung für Max-Code (${maxDigital}): ${formatNumber(idealMaxCodeVoltage, 1)} mV (${formatNumber(idealMaxCodeVoltage/1000, 3)} V)</p>`;
     resultHTML += `<p>Quantisierungsfehler-Bereich: ±${formatNumber(quantErrorMv, 1)} mV (±${formatNumber(quantErrorMv/1000, 4)} V)</p>`;
     
     // Show calculation steps
     resultHTML += `<h4>Rechenweg:</h4>`;
-    resultHTML += `<p>• LSB = Vref / 2^n = ${vrefMv} mV / 2^${bits} = ${vrefMv} / ${Math.pow(2, bits)} = ${formatNumber(lsbMv, 3)} mV</p>`;
+    resultHTML += `<p>• LSB = Vref / 2^n = ${vrefMv} mV / 2^${bits} = ${vrefMv} / ${Math.pow(2, bits)} = ${formatNumber(lsbMv, 2)} mV</p>`;
     resultHTML += `<p>• Max Digital = 2^${bits} - 1 = ${Math.pow(2, bits)} - 1 = ${maxDigital}</p>`;
-    resultHTML += `<p>• FSR = Max Digital × LSB = ${maxDigital} × ${formatNumber(lsbMv, 3)} = ${formatNumber(fsrMv, 3)} mV</p>`;
-    resultHTML += `<p>• Ideale Spannung für Max-Code = (${maxDigital} - 0.5) × LSB = ${maxDigital - 0.5} × ${formatNumber(lsbMv, 3)} = ${formatNumber(idealMaxCodeVoltage, 1)} mV</p>`;
-    resultHTML += `<p>• Quantisierungsfehler = ±LSB/2 = ±${formatNumber(lsbMv, 3)}/2 = ±${formatNumber(quantErrorMv, 1)} mV</p>`;
+    resultHTML += `<p>• FSR = Max Digital × LSB = ${maxDigital} × ${formatNumber(lsbMv, 2)} = ${formatNumber(fsrMv, 2)} mV</p>`;
+    resultHTML += `<p>• Ideale Spannung für Max-Code = (${maxDigital} - 0.5) × LSB = ${maxDigital - 0.5} × ${formatNumber(lsbMv, 2)} = ${formatNumber(idealMaxCodeVoltage, 1)} mV</p>`;
+    resultHTML += `<p>• Quantisierungsfehler = ±LSB/2 = ±${formatNumber(lsbMv, 2)}/2 = ±${formatNumber(quantErrorMv, 1)} mV</p>`;
     
     // Gain Error Calculation
     if (actualMaxVoltage) {
@@ -275,6 +275,7 @@ function calculateADC() {
         const gainErrorMv = actualMaxMv - idealMaxCodeVoltage;
         const gainErrorLsb = gainErrorMv / lsbMv;
         const gainErrorPercent = (gainErrorMv / idealMaxCodeVoltage) * 100;
+        const gainErrorPercentageFsr = (Math.abs(gainErrorMv) / fsrMv) * 100;
         
         resultHTML += `<h4>Gain Error Analyse:</h4>`;
         resultHTML += `<p>Tatsächliche Spannung bei Max-Code: ${actualMaxMv} mV (${formatNumber(actualMaxMv/1000, 3)} V)</p>`;
@@ -282,11 +283,13 @@ function calculateADC() {
         resultHTML += `<p>Gain Error: ${formatNumber(gainErrorMv, 1)} mV (${formatNumber(gainErrorMv/1000, 3)} V)</p>`;
         resultHTML += `<p>Gain Error: ${formatNumber(gainErrorLsb, 2)} LSB</p>`;
         resultHTML += `<p>Gain Error: ${formatNumber(gainErrorPercent, 2)}%</p>`;
+        resultHTML += `<p>Gain Error (% von FSR): ${formatNumber(gainErrorPercentageFsr, 4)}%</p>`;
         
         resultHTML += `<h5>Gain Error Rechenweg:</h5>`;
         resultHTML += `<p>• Gain Error (mV) = Tatsächlich - Ideal = ${actualMaxMv} - ${formatNumber(idealMaxCodeVoltage, 1)} = ${formatNumber(gainErrorMv, 1)} mV</p>`;
-        resultHTML += `<p>• Gain Error (LSB) = Gain Error (mV) / LSB = ${formatNumber(gainErrorMv, 1)} / ${formatNumber(lsbMv, 3)} = ${formatNumber(gainErrorLsb, 2)} LSB</p>`;
+        resultHTML += `<p>• Gain Error (LSB) = Gain Error (mV) / LSB = ${formatNumber(gainErrorMv, 1)} / ${formatNumber(lsbMv, 2)} = ${formatNumber(gainErrorLsb, 2)} LSB</p>`;
         resultHTML += `<p>• Gain Error (%) = (Gain Error / Ideal) × 100% = (${formatNumber(gainErrorMv, 1)} / ${formatNumber(idealMaxCodeVoltage, 1)}) × 100% = ${formatNumber(gainErrorPercent, 2)}%</p>`;
+        resultHTML += `<p>• Gain Error (% von FSR) = |Gain Error| / FSR × 100% = ${formatNumber(Math.abs(gainErrorMv), 1)} / ${formatNumber(fsrMv, 2)} × 100% = ${formatNumber(gainErrorPercentageFsr, 4)}%</p>`;
         
         if (gainErrorMv > 0) {
             resultHTML += `<p class="warning">Positiver Gain Error: ADC erreicht Max-Code zu früh</p>`;
@@ -375,18 +378,21 @@ function calculateADCOffset() {
     const lsbMv = vrefMv / Math.pow(2, bits);
     
     const quantErrorMv = lsbMv / 2;
+    const fsrMv = vrefMv - lsbMv;  // FSR = VREF - 1LSB
     
     let resultHTML = `<h3>ADC Konfiguration</h3>`;
     resultHTML += `<p>Auflösung: ${bits} bits</p>`;
     resultHTML += `<p>Referenzspannung: ${vrefMv} mV</p>`;
-    resultHTML += `<p>LSB Wert: ${formatNumber(lsbMv, 3)} mV</p>`;
+    resultHTML += `<p>LSB Wert: ${formatNumber(lsbMv, 2)} mV</p>`;
     resultHTML += `<p>Max Digital: ${maxDigital}</p>`;
+    resultHTML += `<p>FSR (Full Scale Range): ${formatNumber(fsrMv, 2)} mV</p>`;
     resultHTML += `<p>Quantisierungsfehler-Bereich: ±${formatNumber(quantErrorMv, 1)} mV (±${formatNumber(quantErrorMv/1000, 4)} V)</p>`;
     
     resultHTML += `<h4>ADC Grundlagen Rechenweg:</h4>`;
-    resultHTML += `<p>• LSB = Vref / 2^n = ${vrefMv} mV / 2^${bits} = ${vrefMv} / ${Math.pow(2, bits)} = ${formatNumber(lsbMv, 3)} mV</p>`;
+    resultHTML += `<p>• LSB = Vref / 2^n = ${vrefMv} mV / 2^${bits} = ${vrefMv} / ${Math.pow(2, bits)} = ${formatNumber(lsbMv, 2)} mV</p>`;
     resultHTML += `<p>• Max Digital = 2^${bits} - 1 = ${Math.pow(2, bits)} - 1 = ${maxDigital}</p>`;
-    resultHTML += `<p>• Quantisierungsfehler = ±LSB/2 = ±${formatNumber(lsbMv, 3)}/2 = ±${formatNumber(quantErrorMv, 1)} mV</p>`;
+    resultHTML += `<p>• FSR = Vref - 1LSB = ${vrefMv} - ${formatNumber(lsbMv, 2)} = ${formatNumber(fsrMv, 2)} mV</p>`;
+    resultHTML += `<p>• Quantisierungsfehler = ±LSB/2 = ±${formatNumber(lsbMv, 2)}/2 = ±${formatNumber(quantErrorMv, 1)} mV</p>`;
     
     if (idealDigital && measuredDigital && !offsetLsb) {
         // Calculate offset from ideal vs measured digital values
@@ -394,16 +400,19 @@ function calculateADCOffset() {
         const measured = parseInt(measuredDigital);
         const offsetDigital = measured - ideal;
         const offsetVoltageMv = offsetDigital * lsbMv;
+        const offsetPercentageFsr = (Math.abs(offsetVoltageMv) / fsrMv) * 100;
         
         resultHTML += `<h4>Offset Fehler Berechnung:</h4>`;
         resultHTML += `<p>Idealer Digitalwert: ${ideal}</p>`;
         resultHTML += `<p>Gemessener Digitalwert: ${measured}</p>`;
         resultHTML += `<p>Offset Fehler (Digital): ${offsetDigital} LSB</p>`;
         resultHTML += `<p>Offset Fehler (Spannung): ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>Offset Fehler (% von FSR): ${formatNumber(offsetPercentageFsr, 4)}%</p>`;
         
         resultHTML += `<h4>Offset Rechenweg:</h4>`;
         resultHTML += `<p>• Offset Fehler (Digital) = Gemessen - Ideal = ${measured} - ${ideal} = ${offsetDigital} LSB</p>`;
-        resultHTML += `<p>• Offset Fehler (Spannung) = Offset × LSB = ${offsetDigital} × ${formatNumber(lsbMv, 3)} = ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>• Offset Fehler (Spannung) = Offset × LSB = ${offsetDigital} × ${formatNumber(lsbMv, 2)} = ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>• Offset Fehler (% von FSR) = |Offset Spannung| / FSR × 100% = ${formatNumber(Math.abs(offsetVoltageMv), 3)} / ${formatNumber(fsrMv, 2)} × 100% = ${formatNumber(offsetPercentageFsr, 4)}%</p>`;
         
         if (offsetDigital > 0) {
             resultHTML += `<p>Fehlertyp: Positiver Offset (ADC liest zu hoch)</p>`;
@@ -431,8 +440,8 @@ function calculateADCOffset() {
         
         resultHTML += `<h4>Korrektur Rechenweg:</h4>`;
         resultHTML += `<p>• Korrigierter Digital = Gemessen - Offset = ${measured} - ${offset} = ${formatNumber(correctedDigital, 3)}</p>`;
-        resultHTML += `<p>• Gemessene Spannung = Gemessen × LSB = ${measured} × ${formatNumber(lsbMv, 3)} = ${formatNumber(measuredVoltageMv, 3)} mV</p>`;
-        resultHTML += `<p>• Korrigierte Spannung = Korrigiert × LSB = ${formatNumber(correctedDigital, 3)} × ${formatNumber(lsbMv, 3)} = ${formatNumber(correctedVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>• Gemessene Spannung = Gemessen × LSB = ${measured} × ${formatNumber(lsbMv, 2)} = ${formatNumber(measuredVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>• Korrigierte Spannung = Korrigiert × LSB = ${formatNumber(correctedDigital, 3)} × ${formatNumber(lsbMv, 2)} = ${formatNumber(correctedVoltageMv, 3)} mV</p>`;
         
     } else if (inputVoltageMv && measuredDigital) {
         // Calculate offset from known input voltage and measured digital
@@ -443,6 +452,7 @@ function calculateADCOffset() {
         const offsetDigital = measured - idealDigitalRounded;
         const offsetVoltageMv = offsetDigital * lsbMv;
         const measuredVoltageMv = measured * lsbMv;
+        const offsetPercentageFsr = (Math.abs(offsetVoltageMv) / fsrMv) * 100;
         
         resultHTML += `<h4>Offset Fehler von bekannter Eingabe:</h4>`;
         resultHTML += `<p>Eingangsspannung: ${inputVoltage} mV</p>`;
@@ -450,12 +460,14 @@ function calculateADCOffset() {
         resultHTML += `<p>Gemessener Digital: ${measured}</p>`;
         resultHTML += `<p>Gemessene Spannung: ${formatNumber(measuredVoltageMv, 3)} mV</p>`;
         resultHTML += `<p>Offset Fehler: ${offsetDigital} LSB (${formatNumber(offsetVoltageMv, 3)} mV)</p>`;
+        resultHTML += `<p>Offset Fehler (% von FSR): ${formatNumber(offsetPercentageFsr, 4)}%</p>`;
         
         resultHTML += `<h4>Offset aus Eingangsspannung Rechenweg:</h4>`;
-        resultHTML += `<p>• Erwarteter Digital (exakt) = Eingangsspannung / LSB = ${inputVoltage} / ${formatNumber(lsbMv, 3)} = ${formatNumber(idealDigitalExact, 6)}</p>`;
+        resultHTML += `<p>• Erwarteter Digital (exakt) = Eingangsspannung / LSB = ${inputVoltage} / ${formatNumber(lsbMv, 2)} = ${formatNumber(idealDigitalExact, 6)}</p>`;
         resultHTML += `<p>• Erwarteter Digital (gerundet) = ${idealDigitalRounded}</p>`;
         resultHTML += `<p>• Offset Fehler = Gemessen - Erwartet = ${measured} - ${idealDigitalRounded} = ${offsetDigital} LSB</p>`;
-        resultHTML += `<p>• Offset Fehler (Spannung) = Offset × LSB = ${offsetDigital} × ${formatNumber(lsbMv, 3)} = ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>• Offset Fehler (Spannung) = Offset × LSB = ${offsetDigital} × ${formatNumber(lsbMv, 2)} = ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>• Offset Fehler (% von FSR) = |Offset Spannung| / FSR × 100% = ${formatNumber(Math.abs(offsetVoltageMv), 3)} / ${formatNumber(fsrMv, 2)} × 100% = ${formatNumber(offsetPercentageFsr, 4)}%</p>`;
         
         if (offsetDigital > 0) {
             resultHTML += `<p>Fehlertyp: Positiver Offset (ADC liest zu hoch)</p>`;
@@ -469,10 +481,16 @@ function calculateADCOffset() {
         // Calculate offset voltage from LSB offset
         const offset = parseFloat(offsetLsb);
         const offsetVoltageMv = offset * lsbMv;
+        const offsetPercentageFsr = (Math.abs(offsetVoltageMv) / fsrMv) * 100;
         
         resultHTML += `<h4>Offset Spannungsberechnung:</h4>`;
         resultHTML += `<p>Offset Fehler: ${offset} LSB</p>`;
         resultHTML += `<p>Offset Spannung: ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>Offset Fehler (% von FSR): ${formatNumber(offsetPercentageFsr, 4)}%</p>`;
+        
+        resultHTML += `<h4>Offset Rechenweg:</h4>`;
+        resultHTML += `<p>• Offset Spannung = Offset × LSB = ${offset} × ${formatNumber(lsbMv, 2)} = ${formatNumber(offsetVoltageMv, 3)} mV</p>`;
+        resultHTML += `<p>• Offset Fehler (% von FSR) = |Offset Spannung| / FSR × 100% = ${formatNumber(Math.abs(offsetVoltageMv), 3)} / ${formatNumber(fsrMv, 2)} × 100% = ${formatNumber(offsetPercentageFsr, 4)}%</p>`;
         
         if (offset > 0) {
             resultHTML += `<p>Fehlertyp: Positiver Offset (ADC liest zu hoch)</p>`;
@@ -519,7 +537,7 @@ function findOptimalADC() {
         const errorPct = (error * 100) / targetLsb;
         
         const errorSign = error >= 0 ? '+' : '';
-        resultHTML += `<p>${bits}-bit: LSB=${formatNumber(actualLsb, 3)}mV (${errorSign}${formatNumber(error, 3)}mV, ${errorSign}${formatNumber(errorPct, 1)}%)</p>`;
+        resultHTML += `<p>${bits}-bit: LSB=${formatNumber(actualLsb, 2)}mV (${errorSign}${formatNumber(error, 3)}mV, ${errorSign}${formatNumber(errorPct, 1)}%)</p>`;
     });
     
     document.getElementById('adc-optimal-result').innerHTML = resultHTML;

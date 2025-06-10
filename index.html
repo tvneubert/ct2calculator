@@ -449,6 +449,44 @@
                 </select>
             </div>
             <button onclick="calculateGPIO()" class="calc-btn">Konfiguration berechnen</button>
+            
+            <!-- GPIO Pull-up/Pull-down Entscheidungshilfe -->
+            <div class="theory-section" style="margin-top: 20px;">
+                <h3>🔧 Pull-up/Pull-down Entscheidungshilfe</h3>
+                <div class="theory-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="example-box">
+                            <p><strong>✅ Pull-up verwenden bei:</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>Input Pins mit Schaltern/Tasten</li>
+                                <li>Open-Drain Outputs</li>
+                                <li>I²C/SMBus Leitungen</li>
+                                <li>Reset-Leitungen (aktiv LOW)</li>
+                                <li><strong>Standard wenn unklar</strong></li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>⬇️ Pull-down verwenden bei:</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>Inputs normalerweise LOW</li>
+                                <li>Sensor-Eingänge (positive Signale)</li>
+                                <li>Enable-Signale (normalerweise disabled)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="example-box" style="background: rgba(231, 76, 60, 0.1); border-color: #e74c3c;">
+                        <p><strong>❌ Keine Pull-Widerstände bei:</strong></p>
+                        <ul style="margin: 8px 0; padding-left: 15px;">
+                            <li><strong>Analog Inputs</strong> (verfälschen Messung)</li>
+                            <li><strong>Push-Pull Outputs</strong> (treiben aktiv HIGH/LOW)</li>
+                            <li><strong>High-Speed Digital</strong> (beeinflussen Timing)</li>
+                            <li>Externe Pull-Widerstände vorhanden</li>
+                        </ul>
+                    </div>
+                    <p><strong>💡 CT2 Faustregel:</strong> Wenn nicht spezifiziert → <strong>Pull-up wählen</strong> (sicherster Default)</p>
+                </div>
+            </div>
+            
             <div id="gpio-result" class="result"></div>
         </div>
 
