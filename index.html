@@ -17,38 +17,39 @@
             <!-- Timer/Counter Gruppe -->
             <div class="nav-group">
                 <div class="nav-group-title">⏱️ Timer/Counter</div>
-                <button class="nav-btn active" data-calculator="timer-theory">Timer Theorie</button>
-                <button class="nav-btn" data-calculator="prescaler">Prescaler & ARR</button>
-                <button class="nav-btn" data-calculator="timer-solver">Counter Problem</button>
-                <button class="nav-btn" data-calculator="timer-pwm">Timer PWM</button>
-                <button class="nav-btn" data-calculator="pwm">PWM Werte</button>
+                <button class="nav-btn active" data-calculator="timer-theory" data-tooltip="Timer Theorie">Timer Theorie</button>
+                <button class="nav-btn" data-calculator="prescaler" data-tooltip="Prescaler & ARR">Prescaler & ARR</button>
+                <button class="nav-btn" data-calculator="timer-solver" data-tooltip="Counter Problem">Counter Problem</button>
+                <button class="nav-btn" data-calculator="timer-pwm" data-tooltip="Timer PWM">Timer PWM</button>
+                <button class="nav-btn" data-calculator="pwm" data-tooltip="PWM Werte">PWM Werte</button>
             </div>
             
             <!-- ADC Gruppe -->
             <div class="nav-group">
                 <div class="nav-group-title">📊 ADC</div>
-                <button class="nav-btn" data-calculator="adc">ADC Rechner</button>
-                <button class="nav-btn" data-calculator="adc-offset">ADC Offset</button>
-                <button class="nav-btn" data-calculator="adc-optimal">Optimale ADC</button>
+                <button class="nav-btn" data-calculator="adc" data-tooltip="ADC Rechner">ADC Rechner</button>
+                <button class="nav-btn" data-calculator="adc-offset" data-tooltip="ADC Offset">ADC Offset</button>
+                <button class="nav-btn" data-calculator="adc-optimal" data-tooltip="Optimale ADC">Optimale ADC</button>
             </div>
             
-            <!-- UART Gruppe -->
+            <!-- Kommunikation Gruppe -->
             <div class="nav-group">
-                <div class="nav-group-title">📡 UART</div>
-                <button class="nav-btn" data-calculator="uart">UART Parameter</button>
-                <button class="nav-btn" data-calculator="uart-timing">UART Timing</button>
-                <button class="nav-btn" data-calculator="uart-optimal">Optimale UART</button>
-                <button class="nav-btn" data-calculator="uart-databit">UART Datenbit Konverter</button>
+                <div class="nav-group-title">📡 Kommunikation</div>
+                <button class="nav-btn" data-calculator="uart" data-tooltip="UART Parameter">UART Parameter</button>
+                <button class="nav-btn" data-calculator="uart-timing" data-tooltip="UART Timing">UART Timing</button>
+                <button class="nav-btn" data-calculator="uart-optimal" data-tooltip="Optimale UART">Optimale UART</button>
+                <button class="nav-btn" data-calculator="uart-databit" data-tooltip="UART Datenbit Konverter">UART Datenbit Konverter</button>
+                <button class="nav-btn" data-calculator="spi-theory" data-tooltip="SPI Theorie">SPI Theorie</button>
             </div>
             
             <!-- Hardware Gruppe -->
             <div class="nav-group">
                 <div class="nav-group-title">🔧 Hardware</div>
-                <button class="nav-btn" data-calculator="gpio">GPIO Konfiguration</button>
-                <button class="nav-btn" data-calculator="address-decoder">Adressdekodierung</button>
-                <button class="nav-btn" data-calculator="memory">Memory Rechner</button>
-                <button class="nav-btn" data-calculator="interrupt">Interrupt Impact</button>
-                <button class="nav-btn" data-calculator="endian">Endianness</button>
+                <button class="nav-btn" data-calculator="gpio" data-tooltip="GPIO Konfiguration">GPIO Konfiguration</button>
+                <button class="nav-btn" data-calculator="address-decoder" data-tooltip="Adressdekodierung">Adressdekodierung</button>
+                <button class="nav-btn" data-calculator="memory" data-tooltip="Memory Rechner">Memory Rechner</button>
+                <button class="nav-btn" data-calculator="interrupt" data-tooltip="Interrupt Impact">Interrupt Impact</button>
+                <button class="nav-btn" data-calculator="endian" data-tooltip="Endianness">Endianness</button>
             </div>
         </nav>
 
@@ -450,6 +451,175 @@
             </div>
             
             <div id="uart-databit-result" class="result"></div>
+        </div>
+
+        <!-- SPI Theory Reference -->
+        <div id="spi-theory-calculator" class="calculator">
+            <h2>SPI (Serial Peripheral Interface) Theorie Nachschlagewerk</h2>
+            
+            <!-- SPI Timing Diagram -->
+            <div class="theory-section">
+                <h3>📊 SPI Clock Polarity & Phase Timing</h3>
+                <div class="theory-content">
+                    <div style="text-align: center; margin: 20px 0;">
+                        <img src="image.png" alt="SPI Clock Polarity and Phase Timing Diagram" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px;">
+                    </div>
+                    <p><strong>Timing-Diagramm zeigt:</strong> CPOL/CPHA Kombinationen mit MOSI = 0x67, MISO = 0x2B (MSB first)</p>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>🔧 SPI Grundlagen</h3>
+                <div class="theory-content">
+                    <p><strong>SPI (Serial Peripheral Interface):</strong> Synchroner serieller Kommunikationsbus</p>
+                    <p><strong>Topologie:</strong> Master-Slave mit bis zu mehreren Slaves</p>
+                    <p><strong>Duplexität:</strong> Vollduplex (gleichzeitiges Senden und Empfangen)</p>
+                    <div class="example-box">
+                        <p><strong>🔌 SPI Signale:</strong></p>
+                        <ul style="margin: 8px 0; padding-left: 15px;">
+                            <li><strong>SCLK:</strong> Serial Clock (vom Master generiert)</li>
+                            <li><strong>MOSI:</strong> Master Out, Slave In (Daten Master → Slave)</li>
+                            <li><strong>MISO:</strong> Master In, Slave Out (Daten Slave → Master)</li>
+                            <li><strong>SS/CS:</strong> Slave Select / Chip Select (aktiv LOW)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>⚙️ Clock Polarity (CPOL) und Clock Phase (CPHA)</h3>
+                <div class="theory-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="example-box">
+                            <p><strong>🔄 Clock Polarity (CPOL):</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li><strong>CPOL = 0:</strong> Clock idle LOW</li>
+                                <li><strong>CPOL = 1:</strong> Clock idle HIGH</li>
+                                <li>Bestimmt den Ruhepegel des Clocks</li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>📶 Clock Phase (CPHA):</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li><strong>CPHA = 0:</strong> Sample auf erste Clock-Flanke</li>
+                                <li><strong>CPHA = 1:</strong> Sample auf zweite Clock-Flanke</li>
+                                <li>Bestimmt wann Daten gesampelt werden</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>📋 SPI Modi (CPOL/CPHA Kombinationen)</h3>
+                <div class="theory-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="example-box">
+                            <p><strong>🟢 Mode 0 (CPOL=0, CPHA=0):</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>Clock idle LOW</li>
+                                <li>TX: Daten auf fallende Flanke</li>
+                                <li>RX: Sample auf steigende Flanke</li>
+                                <li><strong>Häufigster Modus</strong></li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>🔵 Mode 1 (CPOL=0, CPHA=1):</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>Clock idle LOW</li>
+                                <li>TX: Daten auf steigende Flanke</li>
+                                <li>RX: Sample auf fallende Flanke</li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>🟡 Mode 2 (CPOL=1, CPHA=0):</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>Clock idle HIGH</li>
+                                <li>TX: Daten auf steigende Flanke</li>
+                                <li>RX: Sample auf fallende Flanke</li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>🔴 Mode 3 (CPOL=1, CPHA=1):</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>Clock idle HIGH</li>
+                                <li>TX: Daten auf fallende Flanke</li>
+                                <li>RX: Sample auf steigende Flanke</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>🔄 SPI Datenübertragung</h3>
+                <div class="theory-content">
+                    <p><strong>Bit-Reihenfolge:</strong> MSB first (Standard) oder LSB first</p>
+                    <p><strong>Datenbreite:</strong> Typisch 8, 16 oder 32 Bits</p>
+                    <p><strong>Geschwindigkeit:</strong> Bis zu 100+ MHz möglich</p>
+                    <div class="example-box">
+                        <p><strong>📡 Übertragungsablauf:</strong></p>
+                        <ol style="margin: 8px 0; padding-left: 15px;">
+                            <li>Master aktiviert SS (LOW)</li>
+                            <li>Master generiert SCLK</li>
+                            <li>Daten werden synchron auf MOSI/MISO übertragen</li>
+                            <li>Nach Übertragung: SS deaktiviert (HIGH)</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>⚡ SPI vs. andere Protokolle</h3>
+                <div class="theory-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                        <div class="example-box">
+                            <p><strong>🔄 SPI</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>✅ Sehr schnell</li>
+                                <li>✅ Vollduplex</li>
+                                <li>✅ Einfach</li>
+                                <li>❌ Viele Pins</li>
+                                <li>❌ Keine Fehlerkorrektur</li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>📡 I²C</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>✅ Nur 2 Pins</li>
+                                <li>✅ Multi-Master</li>
+                                <li>✅ Adressierung</li>
+                                <li>❌ Langsamer</li>
+                                <li>❌ Halbduplex</li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>📺 UART</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li>✅ Punkt-zu-Punkt</li>
+                                <li>✅ Asynchron</li>
+                                <li>✅ 2 Pins</li>
+                                <li>❌ Keine Clock</li>
+                                <li>❌ Baud Rate sync</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>🚀 Praktische Tipps</h3>
+                <div class="theory-content">
+                    <ul>
+                        <li><strong>Modus-Kompatibilität:</strong> Master und Slave müssen gleichen SPI-Modus verwenden</li>
+                        <li><strong>Clock-Geschwindigkeit:</strong> Langsamste Komponente bestimmt max. Speed</li>
+                        <li><strong>SS-Management:</strong> Bei mehreren Slaves separate SS-Pins verwenden</li>
+                        <li><strong>Leitungslänge:</strong> Kurze Verbindungen für hohe Geschwindigkeiten</li>
+                        <li><strong>Pull-up Widerstände:</strong> Für SS-Leitungen empfohlen</li>
+                        <li><strong>Datensheet prüfen:</strong> SPI-Modus und Timing-Parameter beachten</li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
         <!-- GPIO Configuration Calculator -->
