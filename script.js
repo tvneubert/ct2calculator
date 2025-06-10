@@ -1214,6 +1214,7 @@ function calculateGPIO() {
 function calculateAddressDecoding() {
     const addressLinesInput = document.getElementById('address-lines').value.trim();
     const controlRegisterBits = document.getElementById('control-register-bits').value;
+    const dataBusWidth = document.getElementById('data-bus-width').value || 8;
     const baseAddress = document.getElementById('base-address').value;
     const selectPattern = document.getElementById('select-pattern').value;
     const targetAddress = document.getElementById('target-address').value;
@@ -1254,16 +1255,25 @@ function calculateAddressDecoding() {
         baseAddr = parseInt(baseAddress.replace(/^0x/i, ''), 16);
     }
     
+    const dataBusWidthNum = parseInt(dataBusWidth);
+    const totalAddressableWords = totalAddressableBytes / (dataBusWidthNum / 8);
+    const offsetBaseline = baseAddr + maxAddress - 1;
+    
     let resultHTML = `<h3>Adressdekodierung Analyse</h3>`;
     resultHTML += `<p>Eingabe: ${addressLinesInput}</p>`;
     resultHTML += `<p>Adressleitungen: A[${addressLines-1}:0] (${addressLines} Bits)</p>`;
+    resultHTML += `<p>Datenbusbreite: ${dataBusWidthNum} Bits (${dataBusWidthNum/8} Bytes pro Wort)</p>`;
     resultHTML += `<p>Adressierbare Bytes: ${totalAddressableBytes}</p>`;
+    resultHTML += `<p>Adressierbare Wörter: ${Math.floor(totalAddressableWords)} × ${dataBusWidthNum}-Bit</p>`;
     resultHTML += `<p>Adressbereich: 0x${baseAddr.toString(16).toUpperCase().padStart(Math.ceil(addressLines/4), '0')} bis 0x${(baseAddr + maxAddress).toString(16).toUpperCase().padStart(Math.ceil(addressLines/4), '0')}</p>`;
+    resultHTML += `<p><strong>Offset Baseline: 0x${offsetBaseline.toString(16).toUpperCase().padStart(Math.ceil(addressLines/4), '0')} (letzte Adresse - 1)</strong></p>`;
     
     resultHTML += `<h4>Grundlagen Rechenweg:</h4>`;
     resultHTML += `<p>• Adressierbare Bytes = 2^n = 2^${addressLines} = ${totalAddressableBytes} Bytes</p>`;
+    resultHTML += `<p>• Adressierbare Wörter = ${totalAddressableBytes} Bytes ÷ ${dataBusWidthNum/8} Bytes/Wort = ${Math.floor(totalAddressableWords)} Wörter</p>`;
     resultHTML += `<p>• Adressraum = ${totalAddressableBytes} verschiedene Adressen</p>`;
     resultHTML += `<p>• Max Adresse = 2^${addressLines} - 1 = ${maxAddress} (0x${maxAddress.toString(16).toUpperCase()})</p>`;
+    resultHTML += `<p>• Offset Baseline = Max Adresse - 1 = ${maxAddress} - 1 = ${offsetBaseline} (0x${offsetBaseline.toString(16).toUpperCase()})</p>`;
     
     // Control Register Analysis
     if (controlRegisterBits) {
