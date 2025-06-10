@@ -366,11 +366,19 @@ function calculateADCOffset() {
     const maxDigital = Math.pow(2, bits) - 1;
     const lsbMv = vrefMv / Math.pow(2, bits);
     
+    const quantErrorMv = lsbMv / 2;
+    
     let resultHTML = `<h3>ADC Konfiguration</h3>`;
     resultHTML += `<p>Auflösung: ${bits} bits</p>`;
     resultHTML += `<p>Referenzspannung: ${vrefMv} mV</p>`;
     resultHTML += `<p>LSB Wert: ${formatNumber(lsbMv, 3)} mV</p>`;
     resultHTML += `<p>Max Digital: ${maxDigital}</p>`;
+    resultHTML += `<p>Quantisierungsfehler-Bereich: ±${formatNumber(quantErrorMv, 1)} mV (±${formatNumber(quantErrorMv/1000, 4)} V)</p>`;
+    
+    resultHTML += `<h4>ADC Grundlagen Rechenweg:</h4>`;
+    resultHTML += `<p>• LSB = Vref / 2^n = ${vrefMv} mV / 2^${bits} = ${vrefMv} / ${Math.pow(2, bits)} = ${formatNumber(lsbMv, 3)} mV</p>`;
+    resultHTML += `<p>• Max Digital = 2^${bits} - 1 = ${Math.pow(2, bits)} - 1 = ${maxDigital}</p>`;
+    resultHTML += `<p>• Quantisierungsfehler = ±LSB/2 = ±${formatNumber(lsbMv, 3)}/2 = ±${formatNumber(quantErrorMv, 1)} mV</p>`;
     
     if (idealDigital && measuredDigital && !offsetLsb) {
         // Calculate offset from ideal vs measured digital values
