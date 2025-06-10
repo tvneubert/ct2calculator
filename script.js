@@ -27,6 +27,14 @@ document.addEventListener('DOMContentLoaded', function() {
             switchMemoryMode(this.value);
         });
     }
+    
+    // Interrupt mode switching
+    const interruptMode = document.getElementById('interrupt-mode');
+    if (interruptMode) {
+        interruptMode.addEventListener('change', function() {
+            switchInterruptMode(this.value);
+        });
+    }
 });
 
 // Utility functions
@@ -1650,4 +1658,342 @@ function formatMemorySize(bytes) {
     } else {
         return `${bytes} Bytes`;
     }
+}
+
+// 16. Interrupt Impact Calculator Functions
+function switchInterruptMode(mode) {
+    const modeInputs = document.querySelectorAll('.mode-inputs');
+    modeInputs.forEach(input => input.style.display = 'none');
+    
+    let targetInput;
+    switch(mode) {
+        case 'impact':
+            targetInput = document.getElementById('impact-inputs');
+            break;
+        case 'optimal-buffer':
+            targetInput = document.getElementById('optimal-buffer-inputs');
+            break;
+        case 'max-datarate':
+            targetInput = document.getElementById('max-datarate-inputs');
+            break;
+        case 'multiple-sources':
+            // TODO: Implement multiple sources mode
+            targetInput = document.getElementById('impact-inputs');
+            break;
+    }
+    
+    if (targetInput) {
+        targetInput.style.display = 'block';
+    }
+}
+
+function calculateInterrupt() {
+    const mode = document.getElementById('interrupt-mode').value;
+    let result = '';
+    
+    switch(mode) {
+        case 'impact':
+            result = calculateSystemImpact();
+            break;
+        case 'optimal-buffer':
+            result = calculateOptimalBuffer();
+            break;
+        case 'max-datarate':
+            result = calculateMaxDatarate();
+            break;
+        case 'multiple-sources':
+            result = calculateMultipleSources();
+            break;
+        default:
+            result = '<p class="error">Unbekannter Modus.</p>';
+    }
+    
+    document.getElementById('interrupt-result').innerHTML = result;
+}
+
+function calculateSystemImpact() {
+    const cpuFreq = parseFloat(document.getElementById('cpu-freq').value);
+    const cpuFreqUnit = document.getElementById('cpu-freq-unit').value;
+    const dataRate = parseFloat(document.getElementById('data-rate').value);
+    const dataRateUnit = document.getElementById('data-rate-unit').value;
+    const bufferSize = parseFloat(document.getElementById('buffer-size').value);
+    const bufferSizeUnit = document.getElementById('buffer-size-unit').value;
+    const isrTime = parseFloat(document.getElementById('isr-time').value);
+    const isrTimeUnit = document.getElementById('isr-time-unit').value;
+    
+    if (!cpuFreq || !dataRate || !bufferSize || !isrTime) {
+        return '<p class="error">Bitte alle Felder ausfüllen.</p>';
+    }
+    
+    // Convert to base units (Hz, bit/s, bits, seconds)
+    const cpuFreqHz = convertFrequencyToHz(cpuFreq, cpuFreqUnit);
+    const dataRateBitPerSec = convertDataRateToBitPerSec(dataRate, dataRateUnit);
+    const bufferSizeBits = convertBufferSizeToBits(bufferSize, bufferSizeUnit);
+    const isrTimeSec = convertISRTimeToSeconds(isrTime, isrTimeUnit, cpuFreqHz);
+    
+    // Calculate interrupt frequency
+    const interruptFreq = dataRateBitPerSec / bufferSizeBits;
+    
+    // Calculate system impact
+    const systemImpact = (interruptFreq * isrTimeSec * 100);
+    
+    // Calculate for 100% CPU usage
+    const maxDataRateFor100Percent = (cpuFreqHz / isrTime) * bufferSizeBits / 1000; // in kbit/s
+    
+    let result = createResultHTML('System Impact Analyse', `
+        <h4>📊 Berechnungsergebnisse</h4>
+        <p><strong>CPU Frequenz:</strong> ${formatFrequency(cpuFreqHz)}</p>
+        <p><strong>Datenrate:</strong> ${formatDataRate(dataRateBitPerSec)}</p>
+        <p><strong>Buffer Größe:</strong> ${bufferSizeBits} bits</p>
+        <p><strong>ISR Execution Time:</strong> ${formatNumber(isrTimeSec * 1000000, 1)} μs</p>
+        <p><strong>Interrupt Frequenz:</strong> ${formatNumber(interruptFreq, 1)} Hz</p>
+        <p><strong>System Impact:</strong> <span class="${systemImpact > 20 ? 'error' : systemImpact > 10 ? 'warning' : 'success'}">${formatNumber(systemImpact, 2)}%</span></p>
+        
+        <h4>🔍 Detaillierter Rechenweg</h4>
+        <p><strong>1. Interrupt Frequenz berechnen:</strong></p>
+        <p>   Interrupt Freq = Datenrate ÷ Buffer Größe</p>
+        <p>   Interrupt Freq = ${formatDataRate(dataRateBitPerSec)} ÷ ${bufferSizeBits} bits = ${formatNumber(interruptFreq, 1)} Hz</p>
+        
+        <p><strong>2. ISR Execution Time berechnen:</strong></p>
+        <p>   ISR Time = ${isrTime} ${isrTimeUnit} ${isrTimeUnit === 'cycles' ? `÷ ${formatFrequency(cpuFreqHz)}` : ''} = ${formatNumber(isrTimeSec * 1000000, 1)} μs</p>
+        
+        <p><strong>3. System Impact berechnen:</strong></p>
+        <p>   Impact = Interrupt Freq × ISR Time × 100%</p>
+        <p>   Impact = ${formatNumber(interruptFreq, 1)} Hz × ${formatNumber(isrTimeSec * 1000000, 1)} μs × 100%</p>
+        <p>   Impact = ${formatNumber(systemImpact, 2)}%</p>
+        
+        <h4>📈 Optimierungsvorschläge</h4>
+    `);
+    
+    if (systemImpact > 20) {
+        result += `<div class="warning">
+            <p><strong>⚠️ Kritischer Impact (${formatNumber(systemImpact, 1)}%)</strong></p>
+            <p>Empfehlungen:</p>
+            <ul>
+                <li>Buffer auf ${bufferSizeBits * 2} bits vergrößern → Impact: ${formatNumber(systemImpact / 2, 1)}%</li>
+                <li>ISR auf ${Math.round(isrTime * 0.5)} ${isrTimeUnit} optimieren → Impact: ${formatNumber(systemImpact / 2, 1)}%</li>
+                <li>DMA für Datenübertragung verwenden</li>
+            </ul>
+        </div>`;
+    } else if (systemImpact > 10) {
+        result += `<div class="warning">
+            <p><strong>⚠️ Hoher Impact (${formatNumber(systemImpact, 1)}%)</strong></p>
+            <p>Buffer vergrößern könnte hilfreich sein.</p>
+        </div>`;
+    } else {
+        result += `<div class="success">
+            <p><strong>✅ Akzeptabler Impact (${formatNumber(systemImpact, 1)}%)</strong></p>
+            <p>System läuft effizient.</p>
+        </div>`;
+    }
+    
+    result += `
+        <h4>🎯 Performance Vergleich</h4>
+        <p><strong>Maximale Datenrate bei 100% CPU:</strong> ${formatNumber(maxDataRateFor100Percent, 1)} kbit/s</p>
+        <p><strong>Aktuelle Auslastung:</strong> ${formatNumber((dataRateBitPerSec / 1000) / maxDataRateFor100Percent * 100, 1)}% der theoretischen Grenze</p>
+    `;
+    
+    return result;
+}
+
+function calculateOptimalBuffer() {
+    const cpuFreq = parseFloat(document.getElementById('opt-cpu-freq').value);
+    const cpuFreqUnit = document.getElementById('opt-cpu-freq-unit').value;
+    const dataRate = parseFloat(document.getElementById('opt-data-rate').value);
+    const dataRateUnit = document.getElementById('opt-data-rate-unit').value;
+    const isrTime = parseFloat(document.getElementById('opt-isr-time').value);
+    const isrTimeUnit = document.getElementById('opt-isr-time-unit').value;
+    const targetImpact = parseFloat(document.getElementById('target-impact').value);
+    
+    if (!cpuFreq || !dataRate || !isrTime || !targetImpact) {
+        return '<p class="error">Bitte alle Felder ausfüllen.</p>';
+    }
+    
+    const cpuFreqHz = convertFrequencyToHz(cpuFreq, cpuFreqUnit);
+    const dataRateBitPerSec = convertDataRateToBitPerSec(dataRate, dataRateUnit);
+    const isrTimeSec = convertISRTimeToSeconds(isrTime, isrTimeUnit, cpuFreqHz);
+    
+    // Calculate required buffer size
+    const targetImpactDecimal = targetImpact / 100;
+    const requiredInterruptFreq = targetImpactDecimal / isrTimeSec;
+    const optimalBufferSize = Math.ceil(dataRateBitPerSec / requiredInterruptFreq);
+    
+    // Calculate actual impact with optimal buffer
+    const actualInterruptFreq = dataRateBitPerSec / optimalBufferSize;
+    const actualImpact = actualInterruptFreq * isrTimeSec * 100;
+    
+    // Suggest common buffer sizes
+    const commonSizes = [8, 16, 32, 64, 128, 256, 512, 1024];
+    const suggestions = commonSizes.map(size => {
+        const freq = dataRateBitPerSec / size;
+        const impact = freq * isrTimeSec * 100;
+        return { size, freq, impact };
+    }).filter(s => s.impact <= targetImpact * 1.5); // Within 150% of target
+    
+    let result = createResultHTML('Optimale Buffer-Größe', `
+        <h4>📊 Optimierungsergebnis</h4>
+        <p><strong>Ziel System Impact:</strong> ${targetImpact}%</p>
+        <p><strong>Optimale Buffer-Größe:</strong> ${optimalBufferSize} bits</p>
+        <p><strong>Tatsächlicher Impact:</strong> ${formatNumber(actualImpact, 2)}%</p>
+        <p><strong>Interrupt Frequenz:</strong> ${formatNumber(actualInterruptFreq, 1)} Hz</p>
+        
+        <h4>🔍 Rechenweg</h4>
+        <p><strong>1. Maximale Interrupt-Frequenz berechnen:</strong></p>
+        <p>   Max Int Freq = Ziel Impact ÷ ISR Time</p>
+        <p>   Max Int Freq = ${targetImpact}% ÷ ${formatNumber(isrTimeSec * 1000000, 1)} μs = ${formatNumber(requiredInterruptFreq, 1)} Hz</p>
+        
+        <p><strong>2. Minimale Buffer-Größe berechnen:</strong></p>
+        <p>   Min Buffer = Datenrate ÷ Max Int Freq</p>
+        <p>   Min Buffer = ${formatDataRate(dataRateBitPerSec)} ÷ ${formatNumber(requiredInterruptFreq, 1)} Hz = ${formatNumber(optimalBufferSize, 1)} bits</p>
+        
+        <h4>📋 Standard Buffer-Größen Vergleich</h4>
+        <table class="gpio-table">
+            <thead>
+                <tr><th>Buffer (bits)</th><th>Interrupt Freq (Hz)</th><th>System Impact (%)</th><th>Bewertung</th></tr>
+            </thead>
+            <tbody>
+    `);
+    
+    suggestions.forEach(s => {
+        const rating = s.impact <= targetImpact ? '✅ Optimal' : 
+                      s.impact <= targetImpact * 1.2 ? '⚠️ Akzeptabel' : '❌ Zu hoch';
+        result += `<tr>
+            <td>${s.size}</td>
+            <td>${formatNumber(s.freq, 1)}</td>
+            <td>${formatNumber(s.impact, 2)}</td>
+            <td>${rating}</td>
+        </tr>`;
+    });
+    
+    result += `</tbody></table>`;
+    
+    return result;
+}
+
+function calculateMaxDatarate() {
+    const cpuFreq = parseFloat(document.getElementById('max-cpu-freq').value);
+    const cpuFreqUnit = document.getElementById('max-cpu-freq-unit').value;
+    const bufferSize = parseFloat(document.getElementById('max-buffer-size').value);
+    const bufferSizeUnit = document.getElementById('max-buffer-size-unit').value;
+    const isrTime = parseFloat(document.getElementById('max-isr-time').value);
+    const isrTimeUnit = document.getElementById('max-isr-time-unit').value;
+    const maxImpact = parseFloat(document.getElementById('max-target-impact').value);
+    
+    if (!cpuFreq || !bufferSize || !isrTime || !maxImpact) {
+        return '<p class="error">Bitte alle Felder ausfüllen.</p>';
+    }
+    
+    const cpuFreqHz = convertFrequencyToHz(cpuFreq, cpuFreqUnit);
+    const bufferSizeBits = convertBufferSizeToBits(bufferSize, bufferSizeUnit);
+    const isrTimeSec = convertISRTimeToSeconds(isrTime, isrTimeUnit, cpuFreqHz);
+    
+    // Calculate maximum interrupt frequency for target impact
+    const maxImpactDecimal = maxImpact / 100;
+    const maxInterruptFreq = maxImpactDecimal / isrTimeSec;
+    
+    // Calculate maximum data rate
+    const maxDataRateBitPerSec = maxInterruptFreq * bufferSizeBits;
+    const maxDataRateKbitPerSec = maxDataRateBitPerSec / 1000;
+    
+    // Calculate for 100% CPU usage
+    const absoluteMaxDataRate = (cpuFreqHz / (isrTime * (isrTimeUnit === 'cycles' ? 1 : cpuFreqHz))) * bufferSizeBits / 1000;
+    
+    let result = createResultHTML('Maximale Datenrate', `
+        <h4>📊 Datenrate Limits</h4>
+        <p><strong>Maximale Datenrate (${maxImpact}% Impact):</strong> ${formatNumber(maxDataRateKbitPerSec, 1)} kbit/s</p>
+        <p><strong>Absolute Datenrate (100% Impact):</strong> ${formatNumber(absoluteMaxDataRate, 1)} kbit/s</p>
+        <p><strong>Buffer Größe:</strong> ${bufferSizeBits} bits</p>
+        <p><strong>Maximale Interrupt Frequenz:</strong> ${formatNumber(maxInterruptFreq, 1)} Hz</p>
+        
+        <h4>🔍 Rechenweg</h4>
+        <p><strong>1. Maximale Interrupt-Frequenz:</strong></p>
+        <p>   Max Int Freq = Ziel Impact ÷ ISR Time</p>
+        <p>   Max Int Freq = ${maxImpact}% ÷ ${formatNumber(isrTimeSec * 1000000, 1)} μs = ${formatNumber(maxInterruptFreq, 1)} Hz</p>
+        
+        <p><strong>2. Maximale Datenrate:</strong></p>
+        <p>   Max Datenrate = Max Int Freq × Buffer Größe</p>
+        <p>   Max Datenrate = ${formatNumber(maxInterruptFreq, 1)} Hz × ${bufferSizeBits} bits = ${formatNumber(maxDataRateBitPerSec, 1)} bit/s</p>
+        <p>   Max Datenrate = ${formatNumber(maxDataRateKbitPerSec, 1)} kbit/s</p>
+        
+        <h4>📈 Skalierungsoptionen</h4>
+        <table class="gpio-table">
+            <thead>
+                <tr><th>System Impact (%)</th><th>Max Datenrate (kbit/s)</th><th>Interrupt Freq (Hz)</th></tr>
+            </thead>
+            <tbody>
+    `);
+    
+    [1, 5, 10, 15, 20, 25, 50, 100].forEach(impact => {
+        const freq = (impact / 100) / isrTimeSec;
+        const rate = freq * bufferSizeBits / 1000;
+        result += `<tr>
+            <td>${impact}</td>
+            <td>${formatNumber(rate, 1)}</td>
+            <td>${formatNumber(freq, 1)}</td>
+        </tr>`;
+    });
+    
+    result += `</tbody></table>`;
+    
+    return result;
+}
+
+function calculateMultipleSources() {
+    return '<p class="warning">Multiple Interrupt Sources Modus ist noch nicht implementiert. Verwenden Sie vorerst den System Impact Modus für einzelne Quellen.</p>';
+}
+
+// Helper functions for unit conversions
+function convertFrequencyToHz(freq, unit) {
+    switch(unit) {
+        case 'Hz': return freq;
+        case 'kHz': return freq * 1000;
+        case 'MHz': return freq * 1000000;
+        case 'GHz': return freq * 1000000000;
+        default: return freq;
+    }
+}
+
+function convertDataRateToBitPerSec(rate, unit) {
+    switch(unit) {
+        case 'bit/s': return rate;
+        case 'kbit/s': return rate * 1000;
+        case 'Mbit/s': return rate * 1000000;
+        case 'Byte/s': return rate * 8;
+        case 'kByte/s': return rate * 8000;
+        case 'MByte/s': return rate * 8000000;
+        default: return rate;
+    }
+}
+
+function convertBufferSizeToBits(size, unit) {
+    switch(unit) {
+        case 'bit': return size;
+        case 'Byte': return size * 8;
+        case 'word': return size * 16;
+        case 'dword': return size * 32;
+        default: return size;
+    }
+}
+
+function convertISRTimeToSeconds(time, unit, cpuFreqHz) {
+    switch(unit) {
+        case 'cycles': return time / cpuFreqHz;
+        case 'ns': return time / 1000000000;
+        case 'us': return time / 1000000;
+        case 'ms': return time / 1000;
+        default: return time;
+    }
+}
+
+function formatFrequency(hz) {
+    if (hz >= 1000000000) return `${(hz / 1000000000).toFixed(1)} GHz`;
+    if (hz >= 1000000) return `${(hz / 1000000).toFixed(1)} MHz`;
+    if (hz >= 1000) return `${(hz / 1000).toFixed(1)} kHz`;
+    return `${hz.toFixed(0)} Hz`;
+}
+
+function formatDataRate(bitPerSec) {
+    if (bitPerSec >= 1000000) return `${(bitPerSec / 1000000).toFixed(1)} Mbit/s`;
+    if (bitPerSec >= 1000) return `${(bitPerSec / 1000).toFixed(1)} kbit/s`;
+    return `${bitPerSec.toFixed(0)} bit/s`;
 }

@@ -46,6 +46,7 @@
                 <button class="nav-btn" data-calculator="gpio">GPIO Konfiguration</button>
                 <button class="nav-btn" data-calculator="address-decoder">Adressdekodierung</button>
                 <button class="nav-btn" data-calculator="memory">Memory Rechner</button>
+                <button class="nav-btn" data-calculator="interrupt">Interrupt Impact</button>
                 <button class="nav-btn" data-calculator="endian">Endianness</button>
             </div>
         </nav>
@@ -597,6 +598,188 @@
             
             <button onclick="calculateMemory()" class="calc-btn">Berechnen</button>
             <div id="memory-result" class="result"></div>
+        </div>
+
+        <!-- Interrupt Impact Calculator -->
+        <div id="interrupt-calculator" class="calculator">
+            <h2>Interrupt Impact Calculator</h2>
+            
+            <div class="input-group">
+                <label for="interrupt-mode">Berechnungsmodus:</label>
+                <select id="interrupt-mode">
+                    <option value="impact">System Impact berechnen</option>
+                    <option value="optimal-buffer">Optimale Buffer-Größe finden</option>
+                    <option value="max-datarate">Maximale Datenrate berechnen</option>
+                    <option value="multiple-sources">Mehrere Interrupt-Quellen</option>
+                </select>
+            </div>
+            
+            <!-- System Impact Mode -->
+            <div id="impact-inputs" class="mode-inputs">
+                <div class="input-group">
+                    <label for="cpu-freq">CPU Frequenz:</label>
+                    <input type="number" id="cpu-freq" placeholder="z.B. 1000000">
+                    <select id="cpu-freq-unit" style="width: auto; margin-left: 10px;">
+                        <option value="Hz">Hz</option>
+                        <option value="kHz">kHz</option>
+                        <option value="MHz" selected>MHz</option>
+                        <option value="GHz">GHz</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="data-rate">Datenrate:</label>
+                    <input type="number" id="data-rate" placeholder="z.B. 16">
+                    <select id="data-rate-unit" style="width: auto; margin-left: 10px;">
+                        <option value="bit/s">bit/s</option>
+                        <option value="kbit/s" selected>kbit/s</option>
+                        <option value="Mbit/s">Mbit/s</option>
+                        <option value="Byte/s">Byte/s</option>
+                        <option value="kByte/s">kByte/s</option>
+                        <option value="MByte/s">MByte/s</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="buffer-size">Buffer Größe:</label>
+                    <input type="number" id="buffer-size" placeholder="z.B. 32">
+                    <select id="buffer-size-unit" style="width: auto; margin-left: 10px;">
+                        <option value="bit" selected>bit</option>
+                        <option value="Byte">Byte</option>
+                        <option value="word">word (16 bit)</option>
+                        <option value="dword">dword (32 bit)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="isr-time">ISR Execution Time:</label>
+                    <input type="number" id="isr-time" placeholder="z.B. 100">
+                    <select id="isr-time-unit" style="width: auto; margin-left: 10px;">
+                        <option value="cycles" selected>CPU Zyklen</option>
+                        <option value="us">μs</option>
+                        <option value="ms">ms</option>
+                        <option value="ns">ns</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Optimal Buffer Mode -->
+            <div id="optimal-buffer-inputs" class="mode-inputs" style="display: none;">
+                <div class="input-group">
+                    <label for="opt-cpu-freq">CPU Frequenz:</label>
+                    <input type="number" id="opt-cpu-freq" placeholder="z.B. 1">
+                    <select id="opt-cpu-freq-unit" style="width: auto; margin-left: 10px;">
+                        <option value="MHz" selected>MHz</option>
+                        <option value="Hz">Hz</option>
+                        <option value="kHz">kHz</option>
+                        <option value="GHz">GHz</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="opt-data-rate">Datenrate:</label>
+                    <input type="number" id="opt-data-rate" placeholder="z.B. 16">
+                    <select id="opt-data-rate-unit" style="width: auto; margin-left: 10px;">
+                        <option value="kbit/s" selected>kbit/s</option>
+                        <option value="bit/s">bit/s</option>
+                        <option value="Mbit/s">Mbit/s</option>
+                        <option value="kByte/s">kByte/s</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="opt-isr-time">ISR Execution Time:</label>
+                    <input type="number" id="opt-isr-time" placeholder="z.B. 100">
+                    <select id="opt-isr-time-unit" style="width: auto; margin-left: 10px;">
+                        <option value="cycles" selected>CPU Zyklen</option>
+                        <option value="us">μs</option>
+                        <option value="ms">ms</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="target-impact">Ziel System Impact (%):</label>
+                    <input type="number" id="target-impact" placeholder="z.B. 5" max="100" min="0.1" step="0.1">
+                </div>
+            </div>
+            
+            <!-- Max Datarate Mode -->
+            <div id="max-datarate-inputs" class="mode-inputs" style="display: none;">
+                <div class="input-group">
+                    <label for="max-cpu-freq">CPU Frequenz:</label>
+                    <input type="number" id="max-cpu-freq" placeholder="z.B. 1">
+                    <select id="max-cpu-freq-unit" style="width: auto; margin-left: 10px;">
+                        <option value="MHz" selected>MHz</option>
+                        <option value="Hz">Hz</option>
+                        <option value="kHz">kHz</option>
+                        <option value="GHz">GHz</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="max-buffer-size">Buffer Größe:</label>
+                    <input type="number" id="max-buffer-size" placeholder="z.B. 32">
+                    <select id="max-buffer-size-unit" style="width: auto; margin-left: 10px;">
+                        <option value="bit" selected>bit</option>
+                        <option value="Byte">Byte</option>
+                        <option value="word">word (16 bit)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="max-isr-time">ISR Execution Time:</label>
+                    <input type="number" id="max-isr-time" placeholder="z.B. 100">
+                    <select id="max-isr-time-unit" style="width: auto; margin-left: 10px;">
+                        <option value="cycles" selected>CPU Zyklen</option>
+                        <option value="us">μs</option>
+                        <option value="ms">ms</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="max-target-impact">Maximaler System Impact (%):</label>
+                    <input type="number" id="max-target-impact" placeholder="z.B. 10" max="100" min="1" step="0.1">
+                </div>
+            </div>
+            
+            <button onclick="calculateInterrupt()" class="calc-btn">Berechnen</button>
+            
+            <!-- Interrupt Theory -->
+            <div class="theory-section" style="margin-top: 20px;">
+                <h3>⚡ Interrupt Grundlagen</h3>
+                <div class="theory-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="example-box">
+                            <p><strong>📊 Grundformeln:</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li><strong>Interrupt Freq:</strong> Datenrate ÷ Buffer Größe</li>
+                                <li><strong>ISR Execution:</strong> ISR Zyklen ÷ CPU Freq</li>
+                                <li><strong>System Impact:</strong> Int Freq × ISR Zeit × 100%</li>
+                                <li><strong>Max Datenrate:</strong> bei 100% CPU Usage</li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>🎯 CT2 Beispiel:</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li><strong>CPU:</strong> 1 MHz</li>
+                                <li><strong>Datenrate:</strong> 16 kbit/s</li>
+                                <li><strong>Buffer:</strong> 32 bit</li>
+                                <li><strong>ISR:</strong> 100 Zyklen</li>
+                                <li><strong>Impact:</strong> 5%</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="example-box">
+                        <p><strong>💡 Optimierungsstrategien:</strong></p>
+                        <p><strong>Buffer vergrößern:</strong> Weniger Interrupts bei gleicher Datenrate</p>
+                        <p><strong>ISR optimieren:</strong> Weniger CPU-Zyklen pro Interrupt</p>
+                        <p><strong>DMA verwenden:</strong> Hardware-basierte Datenübertragung</p>
+                        <p><strong>Interrupt Prioritäten:</strong> Wichtige Interrupts bevorzugen</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="interrupt-result" class="result"></div>
         </div>
 
         <!-- Timer Theory Reference -->
