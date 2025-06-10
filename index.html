@@ -38,6 +38,7 @@
                 <button class="nav-btn" data-calculator="uart">UART Parameter</button>
                 <button class="nav-btn" data-calculator="uart-timing">UART Timing</button>
                 <button class="nav-btn" data-calculator="uart-optimal">Optimale UART</button>
+                <button class="nav-btn" data-calculator="uart-databit">UART Datenbit Konverter</button>
             </div>
             
             <!-- Hardware Gruppe -->
@@ -389,6 +390,66 @@
             </div>
             <button onclick="findOptimalBaudRate()" class="calc-btn">Berechnen</button>
             <div id="uart-optimal-result" class="result"></div>
+        </div>
+
+        <!-- UART Databit Converter -->
+        <div id="uart-databit-calculator" class="calculator">
+            <h2>UART Datenbit Konverter</h2>
+            <div class="input-group">
+                <label for="uart-raw-bits">UART Übertragung (mit Start/Stop):</label>
+                <input type="text" id="uart-raw-bits" placeholder="z.B. start 0100101 (Start + 7 Datenbits)">
+            </div>
+            <div class="input-group">
+                <label for="uart-data-length">Anzahl Datenbits:</label>
+                <select id="uart-data-length">
+                    <option value="7" selected>7 Bits</option>
+                    <option value="8">8 Bits</option>
+                    <option value="9">9 Bits</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="hex-to-uart">Hex-Wert zu UART (optional):</label>
+                <input type="text" id="hex-to-uart" placeholder="z.B. 0x52 oder 52">
+            </div>
+            <div class="input-group">
+                <label for="binary-to-uart">Binär zu UART (optional):</label>
+                <input type="text" id="binary-to-uart" placeholder="z.B. 1010010">
+            </div>
+            <button onclick="convertUARTDatabits()" class="calc-btn">Konvertieren</button>
+            
+            <!-- UART Bit Order Theory -->
+            <div class="theory-section" style="margin-top: 20px;">
+                <h3>📡 UART Bit-Reihenfolge</h3>
+                <div class="theory-content">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="example-box">
+                            <p><strong>🔄 UART Übertragung:</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li><strong>LSB zuerst:</strong> Niedrigstes Bit wird zuerst gesendet</li>
+                                <li><strong>Start Bit:</strong> Immer 0 (LOW)</li>
+                                <li><strong>Data Bits:</strong> 7, 8 oder 9 Bits</li>
+                                <li><strong>Stop Bit:</strong> Immer 1 (HIGH)</li>
+                            </ul>
+                        </div>
+                        <div class="example-box">
+                            <p><strong>📊 Beispiel 0x52:</strong></p>
+                            <ul style="margin: 8px 0; padding-left: 15px;">
+                                <li><strong>Hex:</strong> 0x52 = 82 dezimal</li>
+                                <li><strong>Binär:</strong> 1010010</li>
+                                <li><strong>UART:</strong> 0100101 (umgekehrt)</li>
+                                <li><strong>Übertragung:</strong> Start + 0100101 + Stop</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="example-box">
+                        <p><strong>💡 Umwandlung:</strong></p>
+                        <p><strong>Hex → UART:</strong> Hex zu Binär → Bits umkehren → UART Format</p>
+                        <p><strong>UART → Hex:</strong> Datenbits extrahieren → Bits umkehren → Hex konvertieren</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="uart-databit-result" class="result"></div>
         </div>
 
         <!-- GPIO Configuration Calculator -->

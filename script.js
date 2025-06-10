@@ -2007,3 +2007,118 @@ function formatDataRate(bitPerSec) {
     if (bitPerSec >= 1000) return `${(bitPerSec / 1000).toFixed(1)} kbit/s`;
     return `${bitPerSec.toFixed(0)} bit/s`;
 }
+
+// UART Databit Converter
+function convertUARTDatabits() {
+    const uartRawInput = document.getElementById('uart-raw-bits').value.trim();
+    const dataLength = parseInt(document.getElementById('uart-data-length').value);
+    const hexInput = document.getElementById('hex-to-uart').value.trim();
+    const binaryInput = document.getElementById('binary-to-uart').value.trim();
+    
+    let resultHTML = `<h3>UART Datenbit Konvertierung</h3>`;
+    
+    // Process UART raw input (e.g., "start 0100101")
+    if (uartRawInput) {
+        resultHTML += `<h4>📡 UART → Hex/Binär Konvertierung</h4>`;
+        
+        // Extract data bits from UART string
+        const cleanInput = uartRawInput.toLowerCase().replace(/start\s*/, '').replace(/\s*stop/, '').trim();
+        const dataBits = cleanInput.replace(/[^01]/g, '');
+        
+        if (dataBits.length === 0) {
+            resultHTML += `<p class="error">Keine gültigen Datenbits gefunden.</p>`;
+        } else {
+            // Reverse the bits (UART sends LSB first)
+            const reversedBits = dataBits.split('').reverse().join('');
+            
+            // Pad to correct length if needed
+            const paddedBits = reversedBits.padStart(dataLength, '0');
+            
+            // Convert to hex
+            const hexValue = parseInt(paddedBits, 2);
+            
+            resultHTML += `<p><strong>Eingabe:</strong> ${uartRawInput}</p>`;
+            resultHTML += `<p><strong>Extrahierte Datenbits:</strong> ${dataBits} (${dataBits.length} Bits)</p>`;
+            resultHTML += `<p><strong>Umgekehrte Bits:</strong> ${reversedBits} (LSB → MSB)</p>`;
+            if (paddedBits !== reversedBits) {
+                resultHTML += `<p><strong>Aufgefüllt auf ${dataLength} Bits:</strong> ${paddedBits}</p>`;
+            }
+            resultHTML += `<p><strong>Dezimalwert:</strong> ${hexValue}</p>`;
+            resultHTML += `<p><strong>Hexadezimalwert:</strong> 0x${hexValue.toString(16).toUpperCase().padStart(Math.ceil(dataLength/4), '0')}</p>`;
+            
+            resultHTML += `<h5>🔍 Rechenweg:</h5>`;
+            resultHTML += `<p>1. Datenbits extrahieren: "${dataBits}"</p>`;
+            resultHTML += `<p>2. Bits umkehren (UART sendet LSB zuerst): "${reversedBits}"</p>`;
+            resultHTML += `<p>3. Binär zu Dezimal: ${paddedBits}₂ = ${hexValue}₁₀</p>`;
+            resultHTML += `<p>4. Dezimal zu Hex: ${hexValue}₁₀ = 0x${hexValue.toString(16).toUpperCase()}₁₆</p>`;
+        }
+    }
+    
+    // Process Hex to UART conversion
+    if (hexInput) {
+        resultHTML += `<h4>🔢 Hex → UART Konvertierung</h4>`;
+        
+        let hexValue;
+        try {
+            hexValue = parseInt(hexInput.replace(/^0x/i, ''), 16);
+        } catch (e) {
+            resultHTML += `<p class="error">Ungültiger Hex-Wert: ${hexInput}</p>`;
+            document.getElementById('uart-databit-result').innerHTML = resultHTML;
+            return;
+        }
+        
+        // Convert to binary
+        const binaryStr = hexValue.toString(2).padStart(dataLength, '0');
+        
+        // Reverse bits for UART transmission (LSB first)
+        const uartBits = binaryStr.split('').reverse().join('');
+        
+        resultHTML += `<p><strong>Hex-Eingabe:</strong> 0x${hexValue.toString(16).toUpperCase()}</p>`;
+        resultHTML += `<p><strong>Dezimalwert:</strong> ${hexValue}</p>`;
+        resultHTML += `<p><strong>Binär (${dataLength} Bits):</strong> ${binaryStr}</p>`;
+        resultHTML += `<p><strong>UART Übertragung:</strong> ${uartBits} (LSB zuerst)</p>`;
+        resultHTML += `<p><strong>Vollständige UART:</strong> 0${uartBits}1 (Start + Data + Stop)</p>`;
+        
+        resultHTML += `<h5>🔍 Rechenweg:</h5>`;
+        resultHTML += `<p>1. Hex zu Dezimal: 0x${hexValue.toString(16).toUpperCase()} = ${hexValue}</p>`;
+        resultHTML += `<p>2. Dezimal zu Binär: ${hexValue}₁₀ = ${binaryStr}₂</p>`;
+        resultHTML += `<p>3. Bits für UART umkehren: ${binaryStr} → ${uartBits}</p>`;
+        resultHTML += `<p>4. Start/Stop Bits hinzufügen: 0${uartBits}1</p>`;
+    }
+    
+    // Process Binary to UART conversion
+    if (binaryInput) {
+        resultHTML += `<h4>🔣 Binär → UART Konvertierung</h4>`;
+        
+        const cleanBinary = binaryInput.replace(/[^01]/g, '');
+        if (cleanBinary.length === 0) {
+            resultHTML += `<p class="error">Keine gültigen Binärbits gefunden.</p>`;
+        } else {
+            const paddedBinary = cleanBinary.padStart(dataLength, '0');
+            const hexValue = parseInt(paddedBinary, 2);
+            const uartBits = paddedBinary.split('').reverse().join('');
+            
+            resultHTML += `<p><strong>Binär-Eingabe:</strong> ${binaryInput}</p>`;
+            resultHTML += `<p><strong>Bereinigte Bits:</strong> ${cleanBinary}</p>`;
+            if (paddedBinary !== cleanBinary) {
+                resultHTML += `<p><strong>Aufgefüllt auf ${dataLength} Bits:</strong> ${paddedBinary}</p>`;
+            }
+            resultHTML += `<p><strong>Dezimalwert:</strong> ${hexValue}</p>`;
+            resultHTML += `<p><strong>Hexadezimalwert:</strong> 0x${hexValue.toString(16).toUpperCase().padStart(Math.ceil(dataLength/4), '0')}</p>`;
+            resultHTML += `<p><strong>UART Übertragung:</strong> ${uartBits} (LSB zuerst)</p>`;
+            resultHTML += `<p><strong>Vollständige UART:</strong> 0${uartBits}1 (Start + Data + Stop)</p>`;
+        }
+    }
+    
+    // Add example if no input provided
+    if (!uartRawInput && !hexInput && !binaryInput) {
+        resultHTML += `<h4>💡 Beispiel (0x52):</h4>`;
+        resultHTML += `<p><strong>Hex:</strong> 0x52 = 82 dezimal</p>`;
+        resultHTML += `<p><strong>Binär (7 Bits):</strong> 1010010</p>`;
+        resultHTML += `<p><strong>UART Übertragung:</strong> 0100101 (umgekehrt)</p>`;
+        resultHTML += `<p><strong>Vollständige UART:</strong> 001001011 (Start + 0100101 + Stop)</p>`;
+        resultHTML += `<p class="error">Bitte mindestens ein Eingabefeld ausfüllen.</p>`;
+    }
+    
+    document.getElementById('uart-databit-result').innerHTML = resultHTML;
+}
