@@ -14,19 +14,39 @@
         </header>
 
         <nav class="calculator-nav">
-            <button class="nav-btn active" data-calculator="prescaler">Prescaler & ARR</button>
-            <button class="nav-btn" data-calculator="pwm">PWM Werte</button>
-            <button class="nav-btn" data-calculator="adc">ADC Rechner</button>
-            <button class="nav-btn" data-calculator="adc-offset">ADC Offset</button>
-            <button class="nav-btn" data-calculator="adc-optimal">Optimale ADC</button>
-            <button class="nav-btn" data-calculator="timer-solver">Counter Problem</button>
-            <button class="nav-btn" data-calculator="endian">Endianness</button>
-            <button class="nav-btn" data-calculator="timer-pwm">Timer PWM</button>
-            <button class="nav-btn" data-calculator="uart">UART Parameter</button>
-            <button class="nav-btn" data-calculator="uart-timing">UART Timing</button>
-            <button class="nav-btn" data-calculator="uart-optimal">Optimale UART</button>
-            <button class="nav-btn" data-calculator="gpio">GPIO Konfiguration</button>
-            <button class="nav-btn" data-calculator="address-decoder">Adressdekodierung</button>
+            <!-- Timer/Counter Gruppe -->
+            <div class="nav-group">
+                <div class="nav-group-title">⏱️ Timer/Counter</div>
+                <button class="nav-btn active" data-calculator="timer-theory">Timer Theorie</button>
+                <button class="nav-btn" data-calculator="prescaler">Prescaler & ARR</button>
+                <button class="nav-btn" data-calculator="timer-solver">Counter Problem</button>
+                <button class="nav-btn" data-calculator="timer-pwm">Timer PWM</button>
+                <button class="nav-btn" data-calculator="pwm">PWM Werte</button>
+            </div>
+            
+            <!-- ADC Gruppe -->
+            <div class="nav-group">
+                <div class="nav-group-title">📊 ADC</div>
+                <button class="nav-btn" data-calculator="adc">ADC Rechner</button>
+                <button class="nav-btn" data-calculator="adc-offset">ADC Offset</button>
+                <button class="nav-btn" data-calculator="adc-optimal">Optimale ADC</button>
+            </div>
+            
+            <!-- UART Gruppe -->
+            <div class="nav-group">
+                <div class="nav-group-title">📡 UART</div>
+                <button class="nav-btn" data-calculator="uart">UART Parameter</button>
+                <button class="nav-btn" data-calculator="uart-timing">UART Timing</button>
+                <button class="nav-btn" data-calculator="uart-optimal">Optimale UART</button>
+            </div>
+            
+            <!-- Hardware Gruppe -->
+            <div class="nav-group">
+                <div class="nav-group-title">🔧 Hardware</div>
+                <button class="nav-btn" data-calculator="gpio">GPIO Konfiguration</button>
+                <button class="nav-btn" data-calculator="address-decoder">Adressdekodierung</button>
+                <button class="nav-btn" data-calculator="endian">Endianness</button>
+            </div>
         </nav>
 
         <!-- Prescaler Calculator -->
@@ -456,6 +476,146 @@
             </div>
             <button onclick="calculateAddressDecoding()" class="calc-btn">Adressdekodierung berechnen</button>
             <div id="address-decoder-result" class="result"></div>
+        </div>
+
+        <!-- Timer Theory Reference -->
+        <div id="timer-theory-calculator" class="calculator">
+            <h2>Timer/Counter Theorie Nachschlagewerk</h2>
+            
+            <div class="theory-section">
+                <h3>🔧 Prescaler (Vorteiler)</h3>
+                <div class="theory-content">
+                    <p><strong>Funktion:</strong> Teilt die Eingangsfrequenz durch einen konfigurierbaren Wert.</p>
+                    <p><strong>Zweck:</strong> Ermöglicht längere Zeitintervalle bei begrenzter Timer-Auflösung.</p>
+                    <p><strong>Berechnung:</strong> f_count = f_clock / (Prescaler + 1)</p>
+                    <p><strong>Register:</strong> Prescaler Register = Gewünschter Teiler - 1</p>
+                    <div class="example-box">
+                        <p><strong>Beispiel:</strong> 84 MHz Clock, Prescaler = 8399<br>
+                        → f_count = 84 MHz / 8400 = 10 kHz<br>
+                        → 1 Timer-Tick = 100 μs</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>🔄 Counter (Zähler)</h3>
+                <div class="theory-content">
+                    <p><strong>Funktion:</strong> Zählt Timer-Takte und speichert aktuellen Wert.</p>
+                    <p><strong>Modi:</strong></p>
+                    <ul>
+                        <li><strong>Upcounter:</strong> Zählt von 0 bis ARR, dann Reset auf 0</li>
+                        <li><strong>Downcounter:</strong> Zählt von ARR bis 0, dann Reload auf ARR</li>
+                        <li><strong>Center-aligned:</strong> Zählt 0→ARR→0 (für symmetrische PWM)</li>
+                    </ul>
+                    <div class="example-box">
+                        <p><strong>Upcounter:</strong> 0 → 1 → 2 → ... → ARR → 0 → 1 → ...<br>
+                        <strong>Downcounter:</strong> ARR → ARR-1 → ... → 1 → 0 → ARR → ...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>🔄 Reload/ARR Register</h3>
+                <div class="theory-content">
+                    <p><strong>Funktion:</strong> Bestimmt den Maximalwert des Counters.</p>
+                    <p><strong>Upcounter:</strong> Counter zählt von 0 bis ARR</p>
+                    <p><strong>Downcounter:</strong> Counter wird bei Underflow auf ARR geladen</p>
+                    <p><strong>Register:</strong> ARR Register = Gewünschte Ticks - 1</p>
+                    <p><strong>Periode:</strong> T = (ARR + 1) × Prescaler / f_clock</p>
+                    <div class="example-box">
+                        <p><strong>Beispiel:</strong> ARR = 9999, Prescaler = 8399, f_clock = 84 MHz<br>
+                        → Periode = 10000 × 8400 / 84MHz = 1 Sekunde</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>📊 Capture Mode</h3>
+                <div class="theory-content">
+                    <p><strong>Funktion:</strong> Erfasst Counter-Wert bei externen Events (Flanken).</p>
+                    <p><strong>Trigger:</strong> Steigende/fallende Flanke oder beide</p>
+                    <p><strong>Anwendung:</strong> Frequenzmessung, Pulslängenmessung, Event-Timestamps</p>
+                    <p><strong>Register:</strong> CCR enthält den gefangenen Counter-Wert</p>
+                    <div class="example-box">
+                        <p><strong>Frequenzmessung:</strong><br>
+                        Event 1: CCR1 = 1000<br>
+                        Event 2: CCR2 = 3000<br>
+                        → Pulslänge = (3000-1000) Timer-Ticks</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>⚡ Compare Mode</h3>
+                <div class="theory-content">
+                    <p><strong>Funktion:</strong> Löst Event aus wenn Counter = CCR Wert</p>
+                    <p><strong>Aktionen:</strong> Interrupt, Output Toggle, PWM-Signal</p>
+                    <p><strong>Anwendung:</strong> Zeitgesteuerte Events, PWM-Generierung</p>
+                    <div class="example-box">
+                        <p><strong>Compare Event:</strong><br>
+                        CCR = 2500, ARR = 9999<br>
+                        → Event bei 25% der Periode<br>
+                        → Interrupt oder Output-Änderung</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>🌊 PWM Mode</h3>
+                <div class="theory-content">
+                    <p><strong>PWM Mode 1 (Upcounter):</strong></p>
+                    <ul>
+                        <li>High wenn Counter < CCR</li>
+                        <li>Low wenn Counter ≥ CCR</li>
+                        <li>Duty Cycle = CCR / (ARR + 1)</li>
+                    </ul>
+                    <p><strong>PWM Mode 2 (Downcounter):</strong></p>
+                    <ul>
+                        <li>High wenn Counter ≥ CCR</li>
+                        <li>Low wenn Counter < CCR</li>
+                        <li>Duty Cycle = (ARR - CCR + 1) / (ARR + 1)</li>
+                    </ul>
+                    <div class="example-box">
+                        <p><strong>25% Duty Cycle:</strong><br>
+                        <strong>Mode 1:</strong> CCR = ARR × 0.25<br>
+                        <strong>Mode 2:</strong> CCR = ARR × 0.75</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>📈 Timing Beziehungen</h3>
+                <div class="theory-content">
+                    <p><strong>Grundformeln:</strong></p>
+                    <ul>
+                        <li><strong>Timer Frequenz:</strong> f_timer = f_clock / (Prescaler + 1)</li>
+                        <li><strong>Timer Periode:</strong> T_timer = 1 / f_timer</li>
+                        <li><strong>Overflow Periode:</strong> T_overflow = (ARR + 1) × T_timer</li>
+                        <li><strong>PWM Frequenz:</strong> f_PWM = f_timer / (ARR + 1)</li>
+                        <li><strong>PWM Periode:</strong> T_PWM = (ARR + 1) × T_timer</li>
+                    </ul>
+                    <div class="example-box">
+                        <p><strong>Vollständiges Beispiel:</strong><br>
+                        f_clock = 84 MHz, Prescaler = 83, ARR = 999<br>
+                        → f_timer = 84MHz/84 = 1 MHz<br>
+                        → f_PWM = 1MHz/1000 = 1 kHz<br>
+                        → T_PWM = 1 ms</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theory-section">
+                <h3>🚀 Praktische Tipps</h3>
+                <div class="theory-content">
+                    <ul>
+                        <li><strong>Prescaler Wahl:</strong> Großer Prescaler für lange Zeiten, kleiner für hohe Auflösung</li>
+                        <li><strong>ARR Maximum:</strong> 16-bit Timer: 65535, 32-bit Timer: 4294967295</li>
+                        <li><strong>PWM Auflösung:</strong> Höhere ARR-Werte = feinere Duty Cycle Kontrolle</li>
+                        <li><strong>Interrupt Load:</strong> Niedrige Timer-Frequenzen reduzieren CPU-Last</li>
+                        <li><strong>Genauigkeit:</strong> Höhere Timer-Frequenz = bessere Zeitauflösung</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
