@@ -45,6 +45,7 @@
                 <div class="nav-group-title">🔧 Hardware</div>
                 <button class="nav-btn" data-calculator="gpio">GPIO Konfiguration</button>
                 <button class="nav-btn" data-calculator="address-decoder">Adressdekodierung</button>
+                <button class="nav-btn" data-calculator="memory">Memory Rechner</button>
                 <button class="nav-btn" data-calculator="endian">Endianness</button>
             </div>
         </nav>
@@ -478,6 +479,88 @@
             <div id="address-decoder-result" class="result"></div>
         </div>
 
+        <!-- Memory Calculator -->
+        <div id="memory-calculator" class="calculator">
+            <h2>Memory Rechner</h2>
+            <div class="input-group">
+                <label for="memory-mode">Berechnungsmodus:</label>
+                <select id="memory-mode">
+                    <option value="address-to-size">Adresspins → Speichergrösse</option>
+                    <option value="size-to-address">Speichergrösse → Adresspins</option>
+                    <option value="memory-mapping">Memory Mapping</option>
+                    <option value="address-range">Adressbereich berechnen</option>
+                </select>
+            </div>
+            
+            <!-- Adresspins → Speichergrösse -->
+            <div id="address-to-size-inputs" class="mode-inputs">
+                <div class="input-group">
+                    <label for="address-pins">Anzahl Adresspins:</label>
+                    <input type="number" id="address-pins" min="1" max="64" placeholder="z.B. 16">
+                </div>
+                <div class="input-group">
+                    <label for="data-width">Datenbreite (Bits):</label>
+                    <input type="number" id="data-width-mem" value="8" placeholder="z.B. 8">
+                </div>
+            </div>
+            
+            <!-- Speichergrösse → Adresspins -->
+            <div id="size-to-address-inputs" class="mode-inputs" style="display: none;">
+                <div class="input-group">
+                    <label for="memory-size">Speichergrösse:</label>
+                    <input type="number" id="memory-size" placeholder="z.B. 64">
+                </div>
+                <div class="input-group">
+                    <label for="size-unit">Einheit:</label>
+                    <select id="size-unit">
+                        <option value="B">Bytes</option>
+                        <option value="KB">KB (1024 Bytes)</option>
+                        <option value="MB">MB (1024 KB)</option>
+                        <option value="GB">GB (1024 MB)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="data-width-reverse">Datenbreite (Bits):</label>
+                    <input type="number" id="data-width-reverse" value="8" placeholder="z.B. 8">
+                </div>
+            </div>
+            
+            <!-- Memory Mapping -->
+            <div id="memory-mapping-inputs" class="mode-inputs" style="display: none;">
+                <div class="input-group">
+                    <label for="base-addr">Basisadresse (Hex):</label>
+                    <input type="text" id="base-addr" placeholder="z.B. 0x6800">
+                </div>
+                <div class="input-group">
+                    <label for="mem-size-mapping">Speichergrösse:</label>
+                    <input type="number" id="mem-size-mapping" placeholder="z.B. 64">
+                </div>
+                <div class="input-group">
+                    <label for="mapping-unit">Einheit:</label>
+                    <select id="mapping-unit">
+                        <option value="B">Bytes</option>
+                        <option value="KB" selected>KB</option>
+                        <option value="MB">MB</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Adressbereich -->
+            <div id="address-range-inputs" class="mode-inputs" style="display: none;">
+                <div class="input-group">
+                    <label for="start-addr">Startadresse (Hex):</label>
+                    <input type="text" id="start-addr" placeholder="z.B. 0x6800">
+                </div>
+                <div class="input-group">
+                    <label for="end-addr">Endadresse (Hex):</label>
+                    <input type="text" id="end-addr" placeholder="z.B. 0x6FFF">
+                </div>
+            </div>
+            
+            <button onclick="calculateMemory()" class="calc-btn">Berechnen</button>
+            <div id="memory-result" class="result"></div>
+        </div>
+
         <!-- Timer Theory Reference -->
         <div id="timer-theory-calculator" class="calculator">
             <h2>Timer/Counter Theorie Nachschlagewerk</h2>
@@ -608,7 +691,7 @@
                 <h3>🚀 Praktische Tipps</h3>
                 <div class="theory-content">
                     <ul>
-                        <li><strong>Prescaler Wahl:</strong> Großer Prescaler für lange Zeiten, kleiner für hohe Auflösung</li>
+                        <li><strong>Prescaler Wahl:</strong> Grosser Prescaler für lange Zeiten, kleiner für hohe Auflösung</li>
                         <li><strong>ARR Maximum:</strong> 16-bit Timer: 65535, 32-bit Timer: 4294967295</li>
                         <li><strong>PWM Auflösung:</strong> Höhere ARR-Werte = feinere Duty Cycle Kontrolle</li>
                         <li><strong>Interrupt Load:</strong> Niedrige Timer-Frequenzen reduzieren CPU-Last</li>

@@ -19,6 +19,14 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById(targetCalculator + '-calculator').classList.add('active');
         });
     });
+    
+    // Memory mode switching
+    const memoryMode = document.getElementById('memory-mode');
+    if (memoryMode) {
+        memoryMode.addEventListener('change', function() {
+            switchMemoryMode(this.value);
+        });
+    }
 });
 
 // Utility functions
@@ -1393,5 +1401,235 @@ function evaluateSelectPattern(pattern, address, addressLines) {
         return false;
     } catch (error) {
         return false;
+    }
+}
+
+// 14. Memory Calculator Functions
+function switchMemoryMode(mode) {
+    const modeInputs = document.querySelectorAll('.mode-inputs');
+    modeInputs.forEach(input => input.style.display = 'none');
+    
+    const targetInput = document.getElementById(mode + '-inputs');
+    if (targetInput) {
+        targetInput.style.display = 'block';
+    }
+}
+
+function calculateMemory() {
+    const mode = document.getElementById('memory-mode').value;
+    let result = '';
+    
+    switch(mode) {
+        case 'address-to-size':
+            result = calculateAddressToSize();
+            break;
+        case 'size-to-address':
+            result = calculateSizeToAddress();
+            break;
+        case 'memory-mapping':
+            result = calculateMemoryMapping();
+            break;
+        case 'address-range':
+            result = calculateAddressRange();
+            break;
+        default:
+            result = '<p class="error">Unbekannter Modus.</p>';
+    }
+    
+    document.getElementById('memory-result').innerHTML = result;
+}
+
+function calculateAddressToSize() {
+    const addressPins = parseInt(document.getElementById('address-pins').value);
+    const dataWidth = parseInt(document.getElementById('data-width-mem').value);
+    
+    if (!addressPins || !dataWidth) {
+        return '<p class="error">Bitte alle Felder ausfüllen.</p>';
+    }
+    
+    const maxAddresses = Math.pow(2, addressPins);
+    const bytesTotal = maxAddresses * (dataWidth / 8);
+    
+    let result = createResultHTML('Speichergrösse Berechnung', `
+        <h4>📊 Ergebnis</h4>
+        <p><strong>Anzahl Adresspins:</strong> ${addressPins}</p>
+        <p><strong>Datenbreite:</strong> ${dataWidth} Bits</p>
+        <p><strong>Maximale Adressen:</strong> 2^${addressPins} = ${maxAddresses.toLocaleString()}</p>
+        <p><strong>Speicherorganisation:</strong> ${(maxAddresses/1024).toFixed(0)}K × ${dataWidth} Bit</p>
+        <p><strong>Gesamtspeicher:</strong> ${formatMemorySize(bytesTotal)}</p>
+        
+        <h4>🔍 Rechenweg</h4>
+        <p><strong>1. Anzahl adressierbare Speicherplätze:</strong></p>
+        <p>   Adressen = 2^${addressPins} = ${maxAddresses.toLocaleString()}</p>
+        <p><strong>2. Bytes pro Adresse:</strong></p>
+        <p>   Bytes/Adresse = ${dataWidth} Bits ÷ 8 = ${dataWidth/8} Bytes</p>
+        <p><strong>3. Gesamtspeicher:</strong></p>
+        <p>   Speicher = ${maxAddresses.toLocaleString()} × ${dataWidth/8} = ${bytesTotal.toLocaleString()} Bytes</p>
+        <p>   Speicher = ${formatMemorySize(bytesTotal)}</p>
+    `);
+    
+    return result;
+}
+
+function calculateSizeToAddress() {
+    const memorySize = parseFloat(document.getElementById('memory-size').value);
+    const unit = document.getElementById('size-unit').value;
+    const dataWidth = parseInt(document.getElementById('data-width-reverse').value);
+    
+    if (!memorySize || !dataWidth) {
+        return '<p class="error">Bitte alle Felder ausfüllen.</p>';
+    }
+    
+    let bytesTotal = memorySize;
+    switch(unit) {
+        case 'KB': bytesTotal *= 1024; break;
+        case 'MB': bytesTotal *= 1024 * 1024; break;
+        case 'GB': bytesTotal *= 1024 * 1024 * 1024; break;
+    }
+    
+    const addresses = bytesTotal / (dataWidth / 8);
+    const addressPins = Math.ceil(Math.log2(addresses));
+    const actualAddresses = Math.pow(2, addressPins);
+    const actualSize = actualAddresses * (dataWidth / 8);
+    
+    let result = createResultHTML('Adresspins Berechnung', `
+        <h4>📊 Ergebnis</h4>
+        <p><strong>Gewünschte Speichergrösse:</strong> ${memorySize} ${unit} = ${bytesTotal.toLocaleString()} Bytes</p>
+        <p><strong>Datenbreite:</strong> ${dataWidth} Bits</p>
+        <p><strong>Benötigte Adresspins:</strong> ${addressPins}</p>
+        <p><strong>Tatsächliche Speichergrösse:</strong> ${formatMemorySize(actualSize)}</p>
+        <p><strong>Speicherorganisation:</strong> ${(actualAddresses/1024).toFixed(0)}K × ${dataWidth} Bit</p>
+        
+        <h4>🔍 Rechenweg</h4>
+        <p><strong>1. Anzahl benötigte Adressen:</strong></p>
+        <p>   Adressen = ${bytesTotal.toLocaleString()} Bytes ÷ ${dataWidth/8} = ${addresses.toLocaleString()}</p>
+        <p><strong>2. Benötigte Adresspins:</strong></p>
+        <p>   Pins = log₂(${addresses.toLocaleString()}) = ${Math.log2(addresses).toFixed(2)}</p>
+        <p>   Pins = ${addressPins} (aufgerundet)</p>
+        <p><strong>3. Tatsächliche Anzahl Adressen:</strong></p>
+        <p>   Adressen = 2^${addressPins} = ${actualAddresses.toLocaleString()}</p>
+        <p><strong>4. Tatsächliche Speichergrösse:</strong></p>
+        <p>   Speicher = ${actualAddresses.toLocaleString()} × ${dataWidth/8} = ${actualSize.toLocaleString()} Bytes</p>
+    `);
+    
+    return result;
+}
+
+function calculateMemoryMapping() {
+    const baseAddrStr = document.getElementById('base-addr').value;
+    const memSize = parseFloat(document.getElementById('mem-size-mapping').value);
+    const unit = document.getElementById('mapping-unit').value;
+    
+    if (!baseAddrStr || !memSize) {
+        return '<p class="error">Bitte alle Felder ausfüllen.</p>';
+    }
+    
+    let baseAddr;
+    try {
+        baseAddr = parseInt(baseAddrStr, 16);
+    } catch (e) {
+        return '<p class="error">Ungültige Hexadezimal-Adresse.</p>';
+    }
+    
+    let sizeBytes = memSize;
+    switch(unit) {
+        case 'KB': sizeBytes *= 1024; break;
+        case 'MB': sizeBytes *= 1024 * 1024; break;
+    }
+    
+    const endAddr = baseAddr + sizeBytes - 1;
+    const addressRange = endAddr - baseAddr + 1;
+    const addressPins = Math.ceil(Math.log2(sizeBytes));
+    
+    let result = createResultHTML('Memory Mapping', `
+        <h4>📊 Ergebnis</h4>
+        <p><strong>Basisadresse:</strong> ${formatHex(baseAddr)}</p>
+        <p><strong>Endadresse:</strong> ${formatHex(endAddr)}</p>
+        <p><strong>Speichergrösse:</strong> ${memSize} ${unit} = ${sizeBytes.toLocaleString()} Bytes</p>
+        <p><strong>Adressbereich:</strong> ${formatHex(baseAddr)} - ${formatHex(endAddr)}</p>
+        <p><strong>Benötigte Adresspins:</strong> ${addressPins}</p>
+        
+        <h4>🔍 Rechenweg</h4>
+        <p><strong>1. Speichergrösse in Bytes:</strong></p>
+        <p>   ${memSize} ${unit} = ${sizeBytes.toLocaleString()} Bytes</p>
+        <p><strong>2. Endadresse berechnen:</strong></p>
+        <p>   Endadresse = Basisadresse + Grösse - 1</p>
+        <p>   Endadresse = ${formatHex(baseAddr)} + ${sizeBytes.toLocaleString()} - 1 = ${formatHex(endAddr)}</p>
+        <p><strong>3. Adressbereich:</strong></p>
+        <p>   Bereich = ${addressRange.toLocaleString()} Adressen</p>
+        <p><strong>4. Benötigte Adresspins:</strong></p>
+        <p>   Pins = log₂(${sizeBytes.toLocaleString()}) = ${addressPins}</p>
+        
+        <h4>🎯 FMC Mapping (STM32)</h4>
+        <p><strong>Höchste Adresse für Software-Zugriff:</strong> ${formatHex(endAddr)}</p>
+        <p><strong>Address Pattern:</strong> A[${addressPins-1}:0] für vollständige Dekodierung</p>
+    `);
+    
+    return result;
+}
+
+function calculateAddressRange() {
+    const startAddrStr = document.getElementById('start-addr').value;
+    const endAddrStr = document.getElementById('end-addr').value;
+    
+    if (!startAddrStr || !endAddrStr) {
+        return '<p class="error">Bitte beide Adressen eingeben.</p>';
+    }
+    
+    let startAddr, endAddr;
+    try {
+        startAddr = parseInt(startAddrStr, 16);
+        endAddr = parseInt(endAddrStr, 16);
+    } catch (e) {
+        return '<p class="error">Ungültige Hexadezimal-Adressen.</p>';
+    }
+    
+    if (startAddr >= endAddr) {
+        return '<p class="error">Startadresse muss kleiner als Endadresse sein.</p>';
+    }
+    
+    const sizeBytes = endAddr - startAddr + 1;
+    const addressPins = Math.ceil(Math.log2(sizeBytes));
+    const blocks64KB = Math.ceil(sizeBytes / (64 * 1024));
+    
+    let result = createResultHTML('Adressbereich Analyse', `
+        <h4>📊 Ergebnis</h4>
+        <p><strong>Startadresse:</strong> ${formatHex(startAddr)}</p>
+        <p><strong>Endadresse:</strong> ${formatHex(endAddr)}</p>
+        <p><strong>Speichergrösse:</strong> ${formatMemorySize(sizeBytes)}</p>
+        <p><strong>Anzahl Adressen:</strong> ${sizeBytes.toLocaleString()}</p>
+        <p><strong>Benötigte Adresspins:</strong> ${addressPins}</p>
+        <p><strong>64KB Blöcke:</strong> ${blocks64KB}</p>
+        
+        <h4>🔍 Rechenweg</h4>
+        <p><strong>1. Adressbereich berechnen:</strong></p>
+        <p>   Grösse = Endadresse - Startadresse + 1</p>
+        <p>   Grösse = ${formatHex(endAddr)} - ${formatHex(startAddr)} + 1 = ${sizeBytes.toLocaleString()} Bytes</p>
+        <p><strong>2. Benötigte Adresspins:</strong></p>
+        <p>   Pins = log₂(${sizeBytes.toLocaleString()}) = ${Math.log2(sizeBytes).toFixed(2)}</p>
+        <p>   Pins = ${addressPins} (aufgerundet)</p>
+        <p><strong>3. Memory Block Analyse:</strong></p>
+        <p>   64KB Blöcke = ${sizeBytes.toLocaleString()} ÷ 65536 = ${blocks64KB}</p>
+        
+        <h4>📋 Memory Organization</h4>
+        <div class="example-box">
+            <p><strong>Adressbereich:</strong> ${formatHex(startAddr)} - ${formatHex(endAddr)}</p>
+            <p><strong>Grösse:</strong> ${formatMemorySize(sizeBytes)}</p>
+            <p><strong>Pattern:</strong> A[${addressPins-1}:0] = ${formatHex(startAddr & ((1 << addressPins) - 1))} - ${formatHex(endAddr & ((1 << addressPins) - 1))}</p>
+        </div>
+    `);
+    
+    return result;
+}
+
+function formatMemorySize(bytes) {
+    if (bytes >= 1024 * 1024 * 1024) {
+        return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    } else if (bytes >= 1024 * 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    } else if (bytes >= 1024) {
+        return `${(bytes / 1024).toFixed(2)} KB`;
+    } else {
+        return `${bytes} Bytes`;
     }
 }
