@@ -727,6 +727,7 @@ function solveCompleteTimerPWM() {
     const dutyFraction = document.getElementById('duty-fraction').value.trim();
     const timerBits = parseInt(document.getElementById('complete-timer-bits').value) || 16;
     const countDir = document.getElementById('complete-count-dir').value || 'down';
+    const pwmStartState = document.getElementById('pwm-start-state').value || 'high';
     
     if (!clockFreq || !prescaler || !periodMs || !dutyFraction) {
         document.getElementById('timer-pwm-result').innerHTML = '<p class="error">Bitte alle Pflichtfelder ausfüllen.</p>';
@@ -801,23 +802,43 @@ function solveCompleteTimerPWM() {
     resultHTML += `<p>• ARR Wert = Timer Ticks (gerundet) = ${timerTicks}</p>`;
     resultHTML += `<p>• Duty Cycle (dezimal) = ${formatNumber(dutyPercent, 2)}% / 100 = ${formatNumber(dutyDecimal, 4)}</p>`;
     
-    // Calculate CCR value based on count direction and PWM logic
+    // Calculate CCR value based on count direction, PWM logic and start state
     let ccrValue;
     if (countDir === 'down') {
-        // For downcounter: PWM high when CNT >= CCR, low when CNT < CCR
-        // For duty_fraction high time: CCR = ARR * (1 - duty_fraction)
-        const inverseDuty = 1 - dutyDecimal;
-        ccrValue = Math.round(arrValue * inverseDuty);
+        if (pwmStartState === 'high') {
+            // Downcounter starting HIGH: PWM high when CNT >= CCR
+            // For duty_fraction high time: CCR = ARR * (1 - duty_fraction)
+            ccrValue = Math.round(arrValue * (1 - dutyDecimal));
+        } else {
+            // Downcounter starting LOW: PWM low when CNT >= CCR, high when CNT < CCR
+            // For duty_fraction high time: CCR = ARR * duty_fraction
+            ccrValue = Math.round(arrValue * dutyDecimal);
+        }
     } else {
-        // For upcounter: PWM high when CNT < CCR, low when CNT >= CCR
-        ccrValue = Math.round(arrValue * dutyDecimal);
+        if (pwmStartState === 'high') {
+            // Upcounter starting HIGH: PWM high when CNT < CCR
+            // For duty_fraction high time: CCR = ARR * duty_fraction
+            ccrValue = Math.round(arrValue * dutyDecimal);
+        } else {
+            // Upcounter starting LOW: PWM low when CNT < CCR, high when CNT >= CCR
+            // For duty_fraction high time: CCR = ARR * (1 - duty_fraction)
+            ccrValue = Math.round(arrValue * (1 - dutyDecimal));
+        }
     }
     
     // CCR calculation steps
     if (countDir === 'down') {
-        resultHTML += `<p>• CCR Berechnung (Downcounter): CCR = ARR × (1 - Duty Cycle) = ${arrValue} × (1 - ${formatNumber(dutyDecimal, 4)}) = ${arrValue} × ${formatNumber(1 - dutyDecimal, 4)} = ${formatNumber(arrValue * (1 - dutyDecimal), 2)} → ${ccrValue}</p>`;
+        if (pwmStartState === 'high') {
+            resultHTML += `<p>• CCR Berechnung (Downcounter, Start HIGH): CCR = ARR × (1 - Duty Cycle) = ${arrValue} × (1 - ${formatNumber(dutyDecimal, 4)}) = ${arrValue} × ${formatNumber(1 - dutyDecimal, 4)} = ${formatNumber(arrValue * (1 - dutyDecimal), 2)} → ${ccrValue}</p>`;
+        } else {
+            resultHTML += `<p>• CCR Berechnung (Downcounter, Start LOW): CCR = ARR × Duty Cycle = ${arrValue} × ${formatNumber(dutyDecimal, 4)} = ${formatNumber(arrValue * dutyDecimal, 2)} → ${ccrValue}</p>`;
+        }
     } else {
-        resultHTML += `<p>• CCR Berechnung (Upcounter): CCR = ARR × Duty Cycle = ${arrValue} × ${formatNumber(dutyDecimal, 4)} = ${formatNumber(arrValue * dutyDecimal, 2)} → ${ccrValue}</p>`;
+        if (pwmStartState === 'high') {
+            resultHTML += `<p>• CCR Berechnung (Upcounter, Start HIGH): CCR = ARR × Duty Cycle = ${arrValue} × ${formatNumber(dutyDecimal, 4)} = ${formatNumber(arrValue * dutyDecimal, 2)} → ${ccrValue}</p>`;
+        } else {
+            resultHTML += `<p>• CCR Berechnung (Upcounter, Start LOW): CCR = ARR × (1 - Duty Cycle) = ${arrValue} × (1 - ${formatNumber(dutyDecimal, 4)}) = ${arrValue} × ${formatNumber(1 - dutyDecimal, 4)} = ${formatNumber(arrValue * (1 - dutyDecimal), 2)} → ${ccrValue}</p>`;
+        }
     }
     
     resultHTML += `<div class="solution">`;
@@ -830,9 +851,17 @@ function solveCompleteTimerPWM() {
     const actualPeriod = (arrValue * prescaler / clockFreq) * 1000;
     let actualDuty;
     if (countDir === 'down') {
-        actualDuty = (1 - ccrValue / arrValue) * 100;
+        if (pwmStartState === 'high') {
+            actualDuty = (1 - ccrValue / arrValue) * 100;
+        } else {
+            actualDuty = (ccrValue / arrValue) * 100;
+        }
     } else {
-        actualDuty = (ccrValue / arrValue) * 100;
+        if (pwmStartState === 'high') {
+            actualDuty = (ccrValue / arrValue) * 100;
+        } else {
+            actualDuty = (1 - ccrValue / arrValue) * 100;
+        }
     }
     
     resultHTML += `<h4>Verifikation:</h4>`;
@@ -842,9 +871,17 @@ function solveCompleteTimerPWM() {
     resultHTML += `<h5>Verifikations-Rechenweg:</h5>`;
     resultHTML += `<p>• Tatsächliche Periode = (ARR × Prescaler / Clock Frequenz) × 1000 = (${arrValue} × ${prescaler} / ${clockFreq}) × 1000 = ${formatNumber(actualPeriod, 3)} ms</p>`;
     if (countDir === 'down') {
-        resultHTML += `<p>• Tatsächlicher Duty Cycle = (1 - CCR/ARR) × 100% = (1 - ${ccrValue}/${arrValue}) × 100% = ${formatNumber(actualDuty, 2)}%</p>`;
+        if (pwmStartState === 'high') {
+            resultHTML += `<p>• Tatsächlicher Duty Cycle (Downcounter, Start HIGH) = (1 - CCR/ARR) × 100% = (1 - ${ccrValue}/${arrValue}) × 100% = ${formatNumber(actualDuty, 2)}%</p>`;
+        } else {
+            resultHTML += `<p>• Tatsächlicher Duty Cycle (Downcounter, Start LOW) = (CCR/ARR) × 100% = (${ccrValue}/${arrValue}) × 100% = ${formatNumber(actualDuty, 2)}%</p>`;
+        }
     } else {
-        resultHTML += `<p>• Tatsächlicher Duty Cycle = (CCR/ARR) × 100% = (${ccrValue}/${arrValue}) × 100% = ${formatNumber(actualDuty, 2)}%</p>`;
+        if (pwmStartState === 'high') {
+            resultHTML += `<p>• Tatsächlicher Duty Cycle (Upcounter, Start HIGH) = (CCR/ARR) × 100% = (${ccrValue}/${arrValue}) × 100% = ${formatNumber(actualDuty, 2)}%</p>`;
+        } else {
+            resultHTML += `<p>• Tatsächlicher Duty Cycle (Upcounter, Start LOW) = (1 - CCR/ARR) × 100% = (1 - ${ccrValue}/${arrValue}) × 100% = ${formatNumber(actualDuty, 2)}%</p>`;
+        }
     }
     
     document.getElementById('timer-pwm-result').innerHTML = resultHTML;
